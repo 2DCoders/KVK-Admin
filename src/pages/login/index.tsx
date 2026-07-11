@@ -1,60 +1,111 @@
 import { useState } from "react";
 import {
+  ArrowRight,
+  Building2,
+  CheckCircle2,
   Eye,
   EyeOff,
-  Mail,
+  LayoutDashboard,
   Lock,
-  LogIn,
+  Mail,
+  ShieldCheck,
+  Sparkles,
+  Users,
   X,
-  CheckCircle,
-  Gamepad2,
-  Monitor,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
-import { login } from "@/services/auth-api";
 import Alert from "@/components/ui/alert";
 
+import { login } from "@/services/auth-api";
+
 export default function Login() {
+  const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
+
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState(false);
+
   const [formData, setFormData] = useState({
     userId: "",
     password: "",
   });
+
   const [loading, setLoading] = useState(false);
+
   const [pageAlert, setPageAlert] = useState<{
     visible: boolean;
     variant?: "success" | "error" | "warning" | "info";
     title?: string;
     description?: string;
-  }>({ visible: false });
+  }>({
+    visible: false,
+  });
 
-  const navigate = useNavigate();
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
 
-  const handleForgotSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setForgotLoading(true);
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (event?: React.FormEvent) => {
+    event?.preventDefault();
+
+    setPageAlert({
+      visible: false,
+    });
+
+    setLoading(true);
+
     try {
-      // Simulate API call - replace with actual API endpoint
+      const admin = await login(formData.userId, formData.password);
+
+      localStorage.setItem("cashier", JSON.stringify(admin));
+
+      navigate("/bookings");
+    } catch (error) {
+      setPageAlert({
+        visible: true,
+        variant: "error",
+        title: "Unable to sign in",
+        description:
+          "The user ID or password you entered is incorrect. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    setForgotLoading(true);
+
+    try {
+      // Replace this with your real password reset API.
       await new Promise((resolve) => setTimeout(resolve, 1500));
+
       setForgotSuccess(true);
+
       setTimeout(() => {
-        setShowForgotModal(false);
-        setForgotSuccess(false);
-        setForgotEmail("");
+        closeForgotModal();
       }, 2500);
     } catch (error) {
       setPageAlert({
         visible: true,
         variant: "error",
-        title: "Error",
-        description: "Failed to send reset request.",
+        title: "Request failed",
+        description:
+          "We could not submit your password reset request. Please try again.",
       });
     } finally {
       setForgotLoading(false);
@@ -65,440 +116,420 @@ export default function Login() {
     setShowForgotModal(false);
     setForgotEmail("");
     setForgotSuccess(false);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    setLoading(true);
-    try {
-      const cashier = await login(formData.userId, formData.password);
-      localStorage.setItem("cashier", JSON.stringify(cashier));
-      navigate("/bookings");
-    } catch (error) {
-      setPageAlert({
-        visible: true,
-        variant: "error",
-        title: "Login Failed",
-        description: "Invalid user ID or password.",
-      });
-    } finally {
-      setLoading(false);
-    }
+    setForgotLoading(false);
   };
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-[#1A0000] via-[#2D0A0A] to-[#0D0000] relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Floating circles - Right side */}
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-red-600/20 rounded-full blur-3xl animate-morph"></div>
-        <div
-          className="absolute -bottom-32 -left-32 w-80 h-80 bg-red-500/15 rounded-full blur-3xl animate-morph"
-          style={{ animationDelay: "2s" }}
-        ></div>
-        <div
-          className="absolute top-1/2 left-1/3 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl animate-glow-pulse"
-          style={{ animationDelay: "1s" }}
-        ></div>
+    <main className="relative h-screen max-h-screen overflow-hidden bg-[#f5f8fc]">
+      {/* Background */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.10),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.08),transparent_26%)]" />
 
-        {/* Floating circles - Left side (visible) */}
-        <div
-          className="absolute -top-20 left-10 w-96 h-96 bg-red-400/15 rounded-full blur-3xl animate-morph"
-          style={{ animationDelay: "1s" }}
-        ></div>
-        <div
-          className="absolute top-1/4 left-1/4 w-72 h-72 bg-red-600/15 rounded-full blur-3xl animate-glow-pulse"
-          style={{ animationDelay: "2.5s" }}
-        ></div>
-        <div
-          className="absolute bottom-10 left-1/3 w-80 h-80 bg-red-500/10 rounded-full blur-3xl animate-morph"
-          style={{ animationDelay: "3s" }}
-        ></div>
+        <div className="absolute -left-28 top-10 h-72 w-72 rounded-full bg-blue-400/10 blur-3xl" />
+
+        <div className="absolute -right-32 bottom-4 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
+
+        <div className="absolute inset-0 opacity-[0.025] [background-image:linear-gradient(#0f172a_1px,transparent_1px),linear-gradient(90deg,#0f172a_1px,transparent_1px)] [background-size:46px_46px]" />
       </div>
 
-      {/* Main container */}
-      <div className="relative z-10 h-screen w-screen flex overflow-hidden">
-        {/* Left side - Branding section (hidden on mobile) */}
-        <div className="hidden md:flex md:w-2/5 flex-col justify-center items-start px-12 lg:px-20 overflow-hidden">
-          <div className="max-w-md animate-fade-in max-h-screen overflow-y-auto pr-2">
-            {/* Logo and title */}
-            <div className="mb-12 flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-red-600 to-red-800 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-110 cursor-pointer">
-                <Gamepad2 className="w-8 h-8 text-white" strokeWidth={2.5} />
+      <div className="relative mx-auto grid h-screen max-h-screen max-w-[1500px] lg:grid-cols-[1fr_0.95fr]">
+        {/* Left panel */}
+        <section className="relative hidden h-full overflow-hidden bg-gradient-to-br from-[#103f91] via-[#1556c0] to-[#2876e8] px-10 py-8 text-white lg:flex lg:flex-col lg:justify-between xl:px-14 xl:py-10">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(56,189,248,0.22),transparent_30%)]"
+          />
+
+          <div
+            aria-hidden="true"
+            className="absolute -right-24 top-20 h-72 w-72 rounded-full border border-white/10"
+          />
+
+          <div
+            aria-hidden="true"
+            className="absolute -right-6 top-36 h-48 w-48 rounded-full border border-white/10"
+          />
+
+          <div className="relative z-10">
+            {/* Branding */}
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/15 shadow-lg backdrop-blur-xl">
+                <Building2 className="h-6 w-6" strokeWidth={2.2} />
               </div>
 
               <div>
-                <h1 className="text-4xl font-bold text-white">
-                  KVK Gaming
+                <h1 className="text-xl font-black tracking-tight">
+                  KVK Arena
                 </h1>
 
-                <p className="text-red-400 font-semibold mt-1">
-                  Gaming Center Management System
+                <p className="mt-0.5 text-xs font-medium text-blue-100">
+                  Central Administration System
                 </p>
               </div>
             </div>
 
-            {/* Hero content */}
-            <div className="space-y-8">
-              <div>
-                <h2 className="text-4xl font-bold text-white leading-tight mb-6">
-                  Manage Your Gaming Center
-                </h2>
-                <p className="text-lg text-gray-300 leading-relaxed">
-                  Manage gaming stations and payments from one powerful dashboard.
-                </p>
+            {/* Main content */}
+            <div className="mt-10 max-w-xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-50 backdrop-blur-xl">
+                <Sparkles className="h-3.5 w-3.5" />
+                Arena Operations
               </div>
 
-              {/* Features list */}
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full bg-red-600/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-red-500 font-bold text-sm">✓</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">
-                      Gaming Station Management
-                    </p>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Track PC, console, and VR station availability
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full bg-red-600/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-red-500 font-bold text-sm">✓</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">
-                      Session & Reservation System
-                    </p>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Manage bookings, playtime, and customer sessions
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full bg-red-600/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-red-500 font-bold text-sm">✓</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">
-                      Tournament & Revenue Analytics
-                    </p>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Monitor tournaments, earnings, and player activity
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+              <h2 className="mt-5 max-w-lg text-4xl font-black leading-[1.12] tracking-tight xl:text-[42px]">
+                Manage the entire arena from one secure portal.
+              </h2>
 
-            {/* Bottom accent */}
-            <div className="mt-16 pt-8 border-t border-white/10">
-              <p className="text-sm text-gray-400">
-                Developed by{" "}
-                <span className="font-semibold text-white">2D-Coders</span> |
-                &copy; 2026 KVK Gaming. All rights reserved.
+              <p className="mt-4 max-w-lg text-sm leading-6 text-blue-100/90 xl:text-base">
+                Access bookings, memberships, payments, customers and daily
+                operations through one centralized administration dashboard.
               </p>
+
+              <div className="mt-7 grid gap-3">
+                <FeatureItem
+                  icon={LayoutDashboard}
+                  title="Centralized Management"
+                  description="Manage all arena modules from one place."
+                />
+
+                <FeatureItem
+                  icon={Users}
+                  title="Customer Management"
+                  description="Handle members, customers and bookings."
+                />
+
+                <FeatureItem
+                  icon={ShieldCheck}
+                  title="Secure Access"
+                  description="Protected access for authorized staff."
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Right side - Login form */}
-        <div className="w-full md:w-3/5 flex flex-col justify-center items-center px-4 py-0 md:px-12 lg:px-20 overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
-          {pageAlert.visible && (
-            <div>
-              <Alert
-                variant={pageAlert.variant as any}
-                title={pageAlert.title}
-                description={pageAlert.description}
-                onClose={() => setPageAlert((s) => ({ ...s, visible: false }))}
-              />
+          {/* Footer */}
+          <div className="relative z-10 flex items-center justify-between border-t border-white/15 pt-5 text-xs text-blue-100/80">
+            <p>
+              Developed by{" "}
+              <span className="font-semibold text-white">2D-Coders</span>
+            </p>
+
+            <p>© 2026 KVK Arena</p>
+          </div>
+        </section>
+
+        {/* Login panel */}
+        <section className="flex h-full max-h-screen items-center justify-center overflow-y-auto px-4 py-5 sm:px-6 lg:px-10 xl:px-14">
+          <div className="w-full max-w-md">
+            {/* Mobile branding */}
+            <div className="mb-5 flex items-center justify-center gap-3 lg:hidden">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-[0_12px_30px_rgba(37,99,235,0.24)]">
+                <Building2 className="h-5 w-5" />
+              </div>
+
+              <div>
+                <h1 className="text-lg font-black tracking-tight text-slate-950">
+                  KVK Arena
+                </h1>
+
+                <p className="text-[11px] font-medium text-slate-500">
+                  Administration System
+                </p>
+              </div>
             </div>
-          )}
-          <div className="w-full max-w-md animate-slide-up overflow-y-auto max-h-screen md:max-h-none">
-            {/* White card */}
-            <div className="bg-white border border-gray-200 rounded-3xl shadow-md p-8 md:p-10 transition-all duration-500 hover:shadow-l hover:border-gray-300 backdrop-blur-sm">
-              {/* Header */}
+
+            {/* Alert */}
+            {pageAlert.visible && (
+              <div className="mb-4">
+                <Alert
+                  variant={pageAlert.variant as any}
+                  title={pageAlert.title}
+                  description={pageAlert.description}
+                  onClose={() =>
+                    setPageAlert((previous) => ({
+                      ...previous,
+                      visible: false,
+                    }))
+                  }
+                />
+              </div>
+            )}
+
+            {/* Login card */}
+            <div className="rounded-[26px] border border-slate-200/80 bg-white p-6 shadow-[0_22px_70px_rgba(15,23,42,0.10)] sm:p-7 xl:p-8">
               <div className="mb-6">
-                <div className="flex items-center gap-2 md:hidden mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-800 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110">
-                    <Monitor
-                      className="w-6 h-6 text-white"
-                      strokeWidth={2.5}
-                    />
-                  </div>
-                  <span className="font-bold text-lg text-gray-900">
-                    KVK Badminton
-                  </span>
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <Lock className="h-[18px] w-[18px]" strokeWidth={2.2} />
                 </div>
-                <h2 className="text-3xl md:text-3xl font-bold text-gray-900 mb-2">
-                  Welcome Back
+
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600">
+                  Admin Portal
+                </p>
+
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
+                  Welcome back
                 </h2>
-                <p className="text-gray-600 font-medium">
-                  Admin Management Portal
+
+                <p className="mt-1.5 text-sm leading-5 text-slate-500">
+                  Enter your credentials to access the administration
+                  dashboard.
                 </p>
               </div>
 
-              {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* User ID field */}
-                <div className="space-y-2">
+                {/* User ID */}
+                <div className="space-y-1.5">
                   <Label
                     htmlFor="userId"
-                    className="text-gray-700 font-semibold text-sm"
+                    className="text-sm font-semibold text-slate-700"
                   >
                     User ID
                   </Label>
-                  <div className="relative group">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-red-600 transition-colors" />
+
+                  <div className="group relative">
+                    <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-600" />
+
                     <Input
                       id="userId"
                       name="userId"
                       type="text"
+                      autoComplete="username"
                       placeholder="Enter your user ID"
                       value={formData.userId}
                       onChange={handleChange}
-                      className="pl-10 pr-4 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:border-red-600 focus:ring-2 focus:ring-red-200 transition-all duration-300 placeholder:text-gray-400 h-9 text-gray-900 hover:border-gray-400"
+                      className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-900 shadow-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-blue-100"
                       required
                     />
                   </div>
                 </div>
 
-                {/* Password field */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="password"
-                    className="text-gray-700 font-semibold text-sm"
-                  >
-                    Password
-                  </Label>
-                  <div className="relative group">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-red-600 transition-colors" />
+                {/* Password */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label
+                      htmlFor="password"
+                      className="text-sm font-semibold text-slate-700"
+                    >
+                      Password
+                    </Label>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotModal(true)}
+                      className="cursor-pointer text-[11px] font-semibold text-blue-600 transition hover:text-blue-800"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+
+                  <div className="group relative">
+                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-600" />
+
                     <Input
                       id="password"
                       name="password"
                       type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
                       placeholder="Enter your password"
                       value={formData.password}
                       onChange={handleChange}
-                      className="pl-10 pr-10 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:border-red-600 focus:ring-2 focus:ring-red-200 transition-all duration-300 placeholder:text-gray-400 h-9 text-gray-900 hover:border-gray-400"
+                      className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10 pr-11 text-sm text-slate-900 shadow-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-blue-100"
                       required
                     />
+
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors duration-300 hover:scale-110 p-1"
+                      onClick={() => setShowPassword((previous) => !previous)}
+                      className="absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-blue-600"
                       aria-label={
                         showPassword ? "Hide password" : "Show password"
                       }
                     >
                       {showPassword ? (
-                        <EyeOff className="w-4 h-4 transition-transform duration-300" />
+                        <EyeOff className="h-4 w-4" />
                       ) : (
-                        <Eye className="w-4 h-4 transition-transform duration-300" />
+                        <Eye className="h-4 w-4" />
                       )}
                     </button>
                   </div>
-                </div>
-
-                {/* Forgot password link */}
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotModal(true)}
-                    className="text-red-700 cursor-pointer hover:text-red-800 font-medium text-xs transition-colors"
-                  >
-                    Forgot password?
-                  </button>
                 </div>
 
                 {/* Login button */}
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-9 mt-6 bg-gradient-to-r cursor-pointer from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white font-semibold rounded-lg shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 group text-sm active:scale-95 active:shadow-md"
+                  className="group mt-1 h-11 w-full cursor-pointer rounded-xl bg-blue-600 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.24)] transition duration-300 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_16px_34px_rgba(37,99,235,0.30)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70"
                 >
                   {loading ? (
                     <>
-                      <svg
-                        className="w-4 h-4 animate-spin"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                        ></path>
-                      </svg>
-                      Signing In...
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                      Signing in...
                     </>
                   ) : (
                     <>
-                      <LogIn className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300 cursor-pointer" />
-                      Sign In
+                      Sign in to dashboard
+
+                      <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </>
                   )}
                 </Button>
               </form>
 
-              {/* Footer */}
-              <div className="mt-6 pt-4 border-t border-gray-200 text-center">
-                <p className="text-xs text-gray-600">
-                  Don't have access?{" "}
-                  <a
-                    href="#"
-                    className="text-red-700 font-semibold hover:text-red-800 transition-colors"
+              <div className="mt-5 border-t border-slate-100 pt-4 text-center">
+                <p className="text-[11px] leading-5 text-slate-500">
+                  Need access?{" "}
+                  <button
+                    type="button"
+                    className="cursor-pointer font-semibold text-blue-600 transition hover:text-blue-800"
                   >
-                    Contact admin
-                  </a>
+                    Contact the system administrator
+                  </button>
                 </p>
               </div>
             </div>
 
-            {/* Security info */}
-            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-600">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>Your data is secure and encrypted</span>
+            {/* Security note */}
+            <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-slate-500">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+
+              <span>Secure and encrypted administrative access</span>
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
-      {/* Forgot Password Modal */}
+      {/* Forgot password modal */}
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-slide-up">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-red-600 to-red-800 px-6 py-6 flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-white">Reset Password</h3>
-                <p className="text-red-100 text-sm mt-1">
-                  Request password reset from super admin
-                </p>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="forgot-password-title"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeForgotModal();
+            }
+          }}
+        >
+          <div className="w-full max-w-md overflow-hidden rounded-[26px] border border-white/60 bg-white shadow-[0_28px_90px_rgba(15,23,42,0.24)]">
+            {/* Modal header */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-700 px-6 py-5 text-white">
+              <div
+                aria-hidden="true"
+                className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/10"
+              />
+
+              <div className="relative flex items-start justify-between gap-4">
+                <div>
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/15">
+                    <Lock className="h-[18px] w-[18px]" />
+                  </div>
+
+                  <h3
+                    id="forgot-password-title"
+                    className="text-lg font-bold"
+                  >
+                    Reset password
+                  </h3>
+
+                  <p className="mt-1 text-sm leading-5 text-blue-100">
+                    Submit a reset request using your registered email or user
+                    ID.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closeForgotModal}
+                  className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white/80 transition hover:bg-white/15 hover:text-white"
+                  aria-label="Close password reset modal"
+                >
+                  <X className="h-[18px] w-[18px]" />
+                </button>
               </div>
-              <button
-                onClick={closeForgotModal}
-                className="text-white cursor-pointer hover:bg-red-500/30 p-2 rounded-lg transition-all duration-200"
-              >
-                <X size={20} />
-              </button>
             </div>
 
-            {/* Modal Content */}
+            {/* Modal body */}
             <div className="p-6">
               {!forgotSuccess ? (
                 <form onSubmit={handleForgotSubmit} className="space-y-4">
-                  <div>
+                  <div className="space-y-1.5">
                     <Label
                       htmlFor="forgotEmail"
-                      className="text-gray-700 font-semibold text-sm mb-2 block"
+                      className="text-sm font-semibold text-slate-700"
                     >
-                      Email or User ID
+                      Email or user ID
                     </Label>
-                    <div className="relative group">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-red-600 transition-colors" />
+
+                    <div className="group relative">
+                      <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-600" />
+
                       <Input
                         id="forgotEmail"
                         type="text"
                         placeholder="Enter your email or user ID"
                         value={forgotEmail}
-                        onChange={(e) => setForgotEmail(e.target.value)}
-                        className="pl-10 pr-4 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:border-red-600 focus:ring-2 focus:ring-red-200 transition-all duration-300 placeholder:text-gray-400 h-10 text-gray-900"
+                        onChange={(event) =>
+                          setForgotEmail(event.target.value)
+                        }
+                        className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10 text-sm text-slate-900 shadow-none transition placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-blue-100"
                         required
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      We'll send a password reset link to your registered email
+
+                    <p className="text-[11px] leading-5 text-slate-500">
+                      Reset instructions will be sent to your registered email
                       address.
                     </p>
                   </div>
 
-                  <div className="space-y-3 pt-2">
+                  <div className="flex flex-col-reverse gap-3 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={closeForgotModal}
+                      className="h-10 flex-1 cursor-pointer rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+
                     <button
                       type="submit"
                       disabled={forgotLoading}
-                      className="w-full h-10 cursor-pointer bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 disabled:scale-100 transition-all duration-300 flex items-center justify-center gap-2 text-sm"
+                      className="flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       {forgotLoading ? (
                         <>
-                          <svg
-                            className="w-4 h-4 animate-spin"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                            ></path>
-                          </svg>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
                           Sending...
                         </>
                       ) : (
                         <>
-                          <Mail size={16} />
-                          Send Reset Request
+                          <Mail className="h-4 w-4" />
+                          Send request
                         </>
                       )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={closeForgotModal}
-                      className="w-full h-10 cursor-pointer border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all duration-300 text-sm"
-                    >
-                      Cancel
                     </button>
                   </div>
                 </form>
               ) : (
-                <div className="text-center py-6">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-4 animate-bounce-soft">
-                    <CheckCircle size={32} className="text-emerald-600" />
+                <div className="py-3 text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
+                    <CheckCircle2 className="h-7 w-7 text-emerald-600" />
                   </div>
-                  <h4 className="text-lg font-bold text-gray-900 mb-2">
-                    Request Sent!
+
+                  <h4 className="mt-4 text-lg font-bold text-slate-950">
+                    Request submitted
                   </h4>
-                  <p className="text-gray-600 text-sm mb-4">
-                    Your password reset request has been sent to the super
-                    admin. You'll receive an email shortly with reset
-                    instructions.
+
+                  <p className="mx-auto mt-2 max-w-sm text-sm leading-5 text-slate-500">
+                    Your reset request has been submitted. Check your registered
+                    email for further instructions.
                   </p>
-                  <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-xs text-orange-700">
-                    Check your email inbox and spam folder for the reset link.
+
+                  <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-[11px] leading-5 text-blue-700">
+                    Check both your inbox and spam folder.
                   </div>
                 </div>
               )}
@@ -506,6 +537,34 @@ export default function Login() {
           </div>
         </div>
       )}
+    </main>
+  );
+}
+
+type FeatureItemProps = {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+};
+
+function FeatureItem({
+  icon: Icon,
+  title,
+  description,
+}: FeatureItemProps) {
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.08] p-3 backdrop-blur-xl transition duration-300 hover:bg-white/[0.12]">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
+        <Icon className="h-[18px] w-[18px]" strokeWidth={2.2} />
+      </div>
+
+      <div>
+        <h3 className="text-sm font-bold text-white">{title}</h3>
+
+        <p className="mt-0.5 text-xs leading-5 text-blue-100/80">
+          {description}
+        </p>
+      </div>
     </div>
   );
 }
