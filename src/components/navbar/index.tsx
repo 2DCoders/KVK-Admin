@@ -95,7 +95,7 @@ export default function Navbar({
           <div ref={accountMenuRef} className="relative">
             <button
               onClick={() => setAccountMenuOpen((current) => !current)}
-              className="w-10 h-10 cursor-pointer rounded-full bg-red-100 text-red-700 flex items-center justify-center text-xs font-semibold shadow-sm ring-0 transition hover:bg-red-200"
+              className="w-10 h-10 cursor-pointer rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-semibold shadow-sm ring-0 transition hover:bg-blue-200"
               aria-label="Open account menu"
               aria-expanded={accountMenuOpen}
               aria-haspopup="menu"
@@ -114,7 +114,7 @@ export default function Navbar({
 
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-red-500 transition hover:bg-red-50 cursor-pointer"
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-blue-500 transition hover:bg-blue-50 cursor-pointer"
                     onClick={() => {
                       setAccountMenuOpen(false)
                       localStorage.removeItem('admin');
