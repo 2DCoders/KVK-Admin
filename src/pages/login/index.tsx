@@ -6,7 +6,6 @@ import {
   EyeOff,
   Gamepad2,
   LockKeyhole,
-  Mail,
   ShieldCheck,
   Sparkles,
   Trophy,
@@ -40,7 +39,7 @@ export default function Login() {
     try {
       const admin = await login(formData.userId, formData.password);
       localStorage.setItem("admin", JSON.stringify(admin));
-      navigate("/bookings");
+      navigate("/dashboard");
     } catch (error) {
       setPageAlert({
         visible: true,

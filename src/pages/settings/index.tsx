@@ -1,8 +1,7 @@
 import Alert from '@/components/ui/alert';
 import { changePassword } from '@/services/auth-api';
 import { ArrowRight, Loader2, Lock } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 export default function SettingsPage() {
     const [pageAlert, setPageAlert] = useState<{ visible: boolean; variant?: 'success' | 'error' | 'warning' | 'info'; title?: string; description?: string }>({ visible: false });
@@ -13,16 +12,6 @@ export default function SettingsPage() {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
-
-    const navigate = useNavigate();
-
-    const dayendData = localStorage.getItem("dayEndData") ? JSON.parse(localStorage.getItem("dayEndData") as string) : null;
-
-    useEffect(() => {
-        if (!dayendData) {
-            navigate("/dayend");
-        }
-    }, [dayendData]);
 
     const handleChangePassword = async () => {
 
@@ -57,7 +46,7 @@ export default function SettingsPage() {
                 visible: true,
                 variant: 'error',
                 title: 'Update password failed!',
-                description: error.response.data.message || 'An error occurred while updating the password. Please try again.'
+                description: error.response.data.message || 'An error occurblue while updating the password. Please try again.'
             });
         } finally {
             setLoading(false)
@@ -136,7 +125,7 @@ export default function SettingsPage() {
                                 <input value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} type="password" className="w-full px-3 py-1 border rounded-md" />
                             </div>
                             <div className="flex justify-end">
-                                <button disabled={!currentPassword && !newPassword && !confirmPassword} onClick={handleChangePassword} className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-amber-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-amber-700">
+                                <button disabled={!currentPassword && !newPassword && !confirmPassword} onClick={handleChangePassword} className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
                                     {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
                                     {loading ? "Updating" : "Change Password"}
                                 </button>

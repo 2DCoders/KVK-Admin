@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { CheckSquare, Settings, ChevronDown, Calendar } from "lucide-react";
+import { CheckSquare, Settings, ChevronDown, Calendar, Gauge } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCategories } from "@/services/categories-api";
 
@@ -59,33 +59,40 @@ export default function Sidebar({ isOpen, isMobile, onClose }: SidebarProps) {
 
   const navItems: NavItem[] = [
     {
-      id: "system-settings",
-      label: "System Settings",
-      icon: Settings,
-      path: "",
-      submenu: [
-        {
-          id: "pc-settings",
-          label: "PC Settings",
-          path: "/pc-settings",
-        },
-        {
-          id: "ps5-settings",
-          label: "PS5 Settings",
-          path: "/ps5-settings",
-        },
-        {
-          id: "pool-settings",
-          label: "Pool Settings",
-          path: "/pool-settings",
-        },
-        {
-          id: "movie-room-settings",
-          label: "Movie Room Settings",
-          path: "/movie-rooms-settings",
-        },
-      ],
+      id: "dashboard",
+      label: "Dashboard",
+      icon: Gauge,
+      path: "/dashboard",
+      submenu: null,
     },
+    // {
+    //   id: "system-settings",
+    //   label: "System Settings",
+    //   icon: Settings,
+    //   path: "",
+    //   submenu: [
+    //     {
+    //       id: "pc-settings",
+    //       label: "PC Settings",
+    //       path: "/pc-settings",
+    //     },
+    //     {
+    //       id: "ps5-settings",
+    //       label: "PS5 Settings",
+    //       path: "/ps5-settings",
+    //     },
+    //     {
+    //       id: "pool-settings",
+    //       label: "Pool Settings",
+    //       path: "/pool-settings",
+    //     },
+    //     {
+    //       id: "movie-room-settings",
+    //       label: "Movie Room Settings",
+    //       path: "/movie-rooms-settings",
+    //     },
+    //   ],
+    // },
     {
       id: "bookings",
       label: "Bookings",
@@ -156,7 +163,7 @@ export default function Sidebar({ isOpen, isMobile, onClose }: SidebarProps) {
 
               const isOpen = openMenu === item.id;
 
-              const btnBase = `w-full flex items-center ${collapsed ? "justify-center" : "justify-between"} ${collapsed ? "px-2" : "px-3"} py-1.5 rounded-xl transition-colors duration-150`;
+              const btnBase = `w-full cursor-pointer flex items-center ${collapsed ? "justify-center" : "justify-between"} ${collapsed ? "px-2" : "px-3"} py-1.5 rounded-xl transition-colors duration-150`;
               const iconWrapper = `${active ? "bg-blue-600 text-white" : "text-gray-400"} w-8 h-8 flex items-center justify-center rounded-lg transition`;
 
               return (
