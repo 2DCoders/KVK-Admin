@@ -1,7 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { CheckSquare, Settings, ChevronDown, Calendar, Gauge } from "lucide-react";
-import { useEffect, useState } from "react";
-import { getCategories } from "@/services/categories-api";
+import { Settings, ChevronDown, Calendar, Gauge } from "lucide-react";
+import { useState } from "react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -44,19 +43,6 @@ export default function Sidebar({ isOpen, isMobile, onClose }: SidebarProps) {
     ? JSON.parse(localStorage.getItem("admin") as string)
     : null;
 
-  const handleGetCategories = async () => {
-    try {
-      const response = await getCategories();
-      localStorage.setItem("categories", JSON.stringify(response));
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    }
-  }
-
-  useEffect(() => {
-    handleGetCategories();
-  }, []);
-
   const navItems: NavItem[] = [
     {
       id: "dashboard",
@@ -94,17 +80,10 @@ export default function Sidebar({ isOpen, isMobile, onClose }: SidebarProps) {
     //   ],
     // },
     {
-      id: "bookings",
-      label: "Bookings",
+      id: "memberships",
+      label: "Memberships",
       icon: Calendar,
-      path: "/bookings",
-      submenu: null,
-    },
-    {
-      id: "dayend",
-      label: "Day end",
-      icon: CheckSquare,
-      path: "/dayend",
+      path: "/memberships",
       submenu: null,
     },
     {
