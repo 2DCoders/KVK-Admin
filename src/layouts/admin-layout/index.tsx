@@ -10,13 +10,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
-  const cashier = localStorage.getItem('cashier') ? JSON.parse(localStorage.getItem('cashier') as string) : null;
+  const admin = localStorage.getItem('admin') ? JSON.parse(localStorage.getItem('admin') as string) : null;
 
   useEffect(() => {    
-    if (!cashier?.token) {
+    if (!admin?.token) {
       window.location.href = '/';
     }
-  }, [cashier]);
+  }, [admin]);
 
   return (
     <div className="min-h-screen bg-linear-to-br from-off-white via-white to-light-gray">

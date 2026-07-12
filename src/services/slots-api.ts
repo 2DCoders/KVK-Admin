@@ -5,11 +5,11 @@ const { API_URL } = getEnv();
 const SLOTS_API_URL = `${API_URL}gaming-m/gaming-slot-generation/`;
 
 const getToken = () => {
-  const cashier = localStorage.getItem("cashier")
-    ? JSON.parse(localStorage.getItem("cashier") as string)
+  const admin = localStorage.getItem("admin")
+    ? JSON.parse(localStorage.getItem("admin") as string)
     : null;
 
-  return cashier ? cashier.token : null;
+  return admin ? admin.token : null;
 };
 
 export const getSlotConfigurationByCategory = async (categoryId: string) => {

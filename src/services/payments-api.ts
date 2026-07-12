@@ -5,11 +5,11 @@ const { API_URL } = getEnv();
 const PAYMENTS_API_URL = `${API_URL}gym/payments/`;
 
 const getToken = () => {
-    const cashier = localStorage.getItem("cashier")
-        ? JSON.parse(localStorage.getItem("cashier") as string)
+    const admin = localStorage.getItem("admin")
+        ? JSON.parse(localStorage.getItem("admin") as string)
         : null;
 
-    return cashier ? cashier.token : null;
+    return admin ? admin.token : null;
 };
 
 export const getPayments = async (startDate: string, endDate: string) => {

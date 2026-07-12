@@ -157,7 +157,7 @@ export default function Dayend() {
   };
 
   const handleContinueToLogin = () => {
-    localStorage.removeItem("cashier");
+    localStorage.removeItem("admin");
     localStorage.removeItem("dayEndData");
     window.location.href = "/";
   };

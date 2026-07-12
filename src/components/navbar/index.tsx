@@ -21,7 +21,7 @@ export default function Navbar({
 
   const navigate = useNavigate();
 
-  const cashier = localStorage.getItem('cashier') ? JSON.parse(localStorage.getItem('cashier') as string) : null;
+  const admin = localStorage.getItem('admin') ? JSON.parse(localStorage.getItem('admin') as string) : null;
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -100,14 +100,14 @@ export default function Navbar({
               aria-expanded={accountMenuOpen}
               aria-haspopup="menu"
             >
-              {cashier?.firstName?.charAt(0)}{cashier?.lastName?.charAt(0)}
+              {admin?.firstName?.charAt(0)}{admin?.lastName?.charAt(0)}
             </button>
 
             {accountMenuOpen && (
               <div className="absolute right-0 top-11 z-50 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl shadow-gray-900/10">
                 <div className="border-b border-gray-100 px-3 py-3">
-                  <div className="text-sm font-medium text-gray-900">{cashier?.firstName} {cashier?.lastName}</div>
-                  <div className="mt-0.5 text-xs text-gray-500">{cashier?.email}</div>
+                  <div className="text-sm font-medium text-gray-900">{admin?.firstName} {admin?.lastName}</div>
+                  <div className="mt-0.5 text-xs text-gray-500">{admin?.email}</div>
                 </div>
 
                 <div className="py-1.5">
@@ -117,7 +117,7 @@ export default function Navbar({
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-red-500 transition hover:bg-red-50 cursor-pointer"
                     onClick={() => {
                       setAccountMenuOpen(false)
-                      localStorage.removeItem('cashier');
+                      localStorage.removeItem('admin');
                       window.location.href = '/';
                     }}
                   >

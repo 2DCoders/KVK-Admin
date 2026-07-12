@@ -5,11 +5,11 @@ const { API_URL } = getEnv();
 const FINANCIAL_API_URL = `${API_URL}financial/`;
 
 const getToken = () => {
-    const cashier = localStorage.getItem("cashier")
-        ? JSON.parse(localStorage.getItem("cashier") as string)
+    const admin = localStorage.getItem("admin")
+        ? JSON.parse(localStorage.getItem("admin") as string)
         : null;
 
-    return cashier ? cashier.token : null;
+    return admin ? admin.token : null;
 };
 
 export const getFinancialSummary = async (startDate: string, endDate: string) => {

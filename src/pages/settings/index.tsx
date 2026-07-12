@@ -6,9 +6,9 @@ import { useNavigate } from 'react-router-dom';
 
 export default function SettingsPage() {
     const [pageAlert, setPageAlert] = useState<{ visible: boolean; variant?: 'success' | 'error' | 'warning' | 'info'; title?: string; description?: string }>({ visible: false });
-    const cashier = localStorage.getItem('cashier') ? JSON.parse(localStorage.getItem('cashier') as string) : null;
-    const [fullName, setFullName] = useState(cashier ? cashier.firstName + ' ' + cashier.lastName : 'Admin User');
-    const [email, setEmail] = useState(cashier ? cashier.email : 'admin@kvkgym.com');
+    const admin = localStorage.getItem('admin') ? JSON.parse(localStorage.getItem('admin') as string) : null;
+    const [fullName, setFullName] = useState(admin ? admin.firstName + ' ' + admin.lastName : 'Admin User');
+    const [email, setEmail] = useState(admin ? admin.email : 'admin@kvkgym.com');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -39,8 +39,8 @@ export default function SettingsPage() {
         setLoading(true)
         try {
             const body = {
-                userId: cashier.userId,
-                userName: cashier.userName,
+                userId: admin.userId,
+                userName: admin.userName,
                 currentPassword,
                 newPassword
             }

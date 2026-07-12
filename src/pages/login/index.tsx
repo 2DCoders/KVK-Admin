@@ -10,13 +10,47 @@ import {
   ShieldCheck,
   Sparkles,
   Trophy,
+  User,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { login } from "@/services/auth-api";
+import { Alert } from "@/components/ui/alert";
+import { createPortal } from "react-dom";
 
 export default function Login() {
+  const [formData, setFormData] = useState({
+    userId: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [pageAlert, setPageAlert] = useState<{
+    visible: boolean;
+    variant?: "success" | "error" | "warning" | "info";
+    title?: string;
+    description?: string;
+  }>({ visible: false });
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const navigate = useNavigate();
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    setLoading(true);
+    try {
+      const admin = await login(formData.userId, formData.password);
+      localStorage.setItem("admin", JSON.stringify(admin));
+      navigate("/bookings");
+    } catch (error) {
+      setPageAlert({
+        visible: true,
+        variant: "error",
+        title: "Login Failed",
+        description: "Invalid user ID or password.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -26,6 +60,27 @@ export default function Login() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_10%,rgba(37,99,235,0.08),transparent_22%),radial-gradient(circle_at_92%_90%,rgba(59,130,246,0.08),transparent_24%)]"
         />
+
+        {pageAlert.visible && (
+          <div>
+            <Alert
+              variant={pageAlert.variant as any}
+              title={pageAlert.title}
+              description={pageAlert.description}
+              onClose={() => setPageAlert((s) => ({ ...s, visible: false }))}
+            />
+          </div>
+        )}
+
+        {loading && createPortal(
+          <div className="fixed inset-0 z-[9999999999] flex items-center justify-center bg-black/60 backdrop-blur-md">
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-14 w-14 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
+              <p className="text-sm text-white font-medium">Loading</p>
+            </div>
+          </div>,
+          document.body
+        )}
 
         {/* Left side */}
         <div className="relative z-10 flex min-h-0 flex-col px-5 py-4 sm:px-8 sm:py-5 lg:px-12 xl:px-16">
@@ -67,23 +122,29 @@ export default function Login() {
               <form onSubmit={handleSubmit} className="space-y-3.5">
                 <div>
                   <label
-                    htmlFor="email"
+                    htmlFor="userId"
                     className="mb-1.5 block text-xs font-semibold text-slate-700"
                   >
-                    Email address
+                    User ID
                   </label>
 
                   <div className="group relative">
-                    <Mail
-                      size={17}
+                    <User size={17}
                       className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-blue-600"
                     />
 
                     <input
-                      id="email"
-                      type="email"
-                      placeholder="admin@kvkarena.lk"
-                      autoComplete="email"
+                      id="userId"
+                      value={formData.userId}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          userId: e.target.value,
+                        }))
+                      }
+                      type="text"
+                      placeholder="Enter your User ID"
+                      autoComplete="username"
                       className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
                     />
                   </div>
@@ -114,6 +175,13 @@ export default function Login() {
 
                     <input
                       id="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          password: e.target.value,
+                        }))
+                      }
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       autoComplete="current-password"
