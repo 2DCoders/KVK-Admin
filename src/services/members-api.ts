@@ -24,3 +24,16 @@ export const getMembers = async () => {
         throw error;
     }
 }
+
+export const pay = async (body: any) => {
+    try {
+        const response = await axios.post(`${MEMBERS_API_URL}pay`, body, {
+            headers: {
+                Authorization: `Bearer ${getToken()}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

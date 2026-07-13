@@ -1,17 +1,25 @@
-import { getMembers } from "@/services/members-api";
+import { Alert } from "@/components/ui/alert";
+import { getMembers, pay } from "@/services/members-api";
 import {
+  CalendarDays,
   Check,
   CheckCircle2,
   ChevronDown,
+  CreditCard,
+  EyeIcon,
   Mail,
   MoreHorizontal,
   Phone,
   RefreshCcw,
   Search,
+  ShieldCheck,
+  User,
   UserCheck,
   Users,
+  X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { FaWhatsapp } from "react-icons/fa";
 
 type Member = {
@@ -40,6 +48,92 @@ export default function Memberships() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [isApprovalConfirmed, setIsApprovalConfirmed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [pageAlert, setPageAlert] = useState<{
+    visible: boolean;
+    variant?: "success" | "error" | "warning" | "info";
+    title?: string;
+    description?: string;
+  }>({ visible: false });
+  const [isViewingMember, setIsViewingMember] = useState(false);
+
+  const handleOpenViewMemberModal = (member: Member) => {
+    setSelectedMember(member);
+    setIsViewingMember(true);
+  }
+
+const handleOpenApproveModal = (member: Member) => {
+  setSelectedMember(member);
+  setIsViewingMember(false);
+  setIsApprovalConfirmed(false);
+};
+
+const handleCloseApproveModal = () => {
+  handleCloseMemberModal();
+};
+
+  const handleApproveMember = async () => {
+    if (!selectedMember || !isApprovalConfirmed) return;
+
+    setLoading(true);
+
+    try {
+      setApprovingId(selectedMember.id);
+
+      const formatDateTime = (date: Date) => {
+        const pad = (n: number) => String(n).padStart(2, "0");
+
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+      };
+
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      endDate.setFullYear(endDate.getFullYear() + 1);
+
+      const body = {
+        memberId: selectedMember.id,
+        isPaid: true,
+        startDate: formatDateTime(startDate),
+        endDate: formatDateTime(endDate),
+      };
+
+      await pay(body);
+      setPageAlert({
+        visible: true,
+        variant: "success",
+        title: "Membership approved",
+        description: `The membership for ${selectedMember.firstName} ${selectedMember.lastName} has been successfully approved.`,
+      });
+      /*
+       * Replace this section with your approve API call.
+       *
+       * Example:
+       *
+       * await approveMember(selectedMember.id);
+       * await handleFetchMembers();
+       */
+
+      // Temporary local update for UI testing.
+      handleFetchMembers();
+
+      handleCloseApproveModal();
+    } catch (error) {
+      setPageAlert({
+        visible: true,
+        variant: "error",
+        title: "Approval failed",
+        description:
+          "An error occurred while approving the membership. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+      setApprovingId(null);
+      setSelectedMember(null);
+      setIsApprovalConfirmed(false);
+    }
+  };
 
   const handleFetchMembers = async () => {
     try {
@@ -99,11 +193,25 @@ export default function Memberships() {
     );
   };
 
+  const handleViewMember = (member: Member) => {
+  setSelectedMember(member);
+  setIsViewingMember(true);
+  setIsApprovalConfirmed(false);
+};
+
+const handleCloseMemberModal = () => {
+  if (approvingId) return;
+
+  setSelectedMember(null);
+  setIsViewingMember(false);
+  setIsApprovalConfirmed(false);
+};
+
   const filteredMembers = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();
 
     return members.filter((member) => {
-      const memberStatus = String(member.status);
+      const memberStatus = String(member.membershipStatus);
 
       const matchesStatus =
         statusFilter === "all" || memberStatus === statusFilter;
@@ -124,43 +232,12 @@ export default function Memberships() {
   }, [members, searchTerm, statusFilter]);
 
   const pendingCount = members.filter(
-    (member) => String(member.status) === "1",
+    (member) => String(member.membershipStatus) === "2",
   ).length;
 
   const approvedCount = members.filter(
-    (member) => String(member.status) === "2",
+    (member) => String(member.membershipStatus) === "1",
   ).length;
-
-  const handleApproveMember = async (member: Member) => {
-    try {
-      setApprovingId(member.id);
-
-      /*
-       * Replace this section with your approve API call.
-       *
-       * Example:
-       *
-       * await approveMember(member.id);
-       * await handleFetchMembers();
-       */
-
-      // Temporary local update for UI testing.
-      setMembers((currentMembers) =>
-        currentMembers.map((currentMember) =>
-          currentMember.id === member.id
-            ? {
-                ...currentMember,
-                status: "2",
-              }
-            : currentMember,
-        ),
-      );
-    } catch (error) {
-      console.error("Failed to approve member:", error);
-    } finally {
-      setApprovingId(null);
-    }
-  };
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName?.charAt(0) ?? ""}${
@@ -171,7 +248,7 @@ export default function Memberships() {
   const getStatusBadge = (status: string | number) => {
     const currentStatus = String(status);
 
-    if (currentStatus === "2") {
+    if (currentStatus === "1") {
       return (
         <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
           <CheckCircle2 size={13} />
@@ -190,6 +267,27 @@ export default function Memberships() {
 
   return (
     <main className="min-h-screen bg-slate-50">
+      {pageAlert.visible && (
+        <div>
+          <Alert
+            variant={pageAlert.variant as any}
+            title={pageAlert.title}
+            description={pageAlert.description}
+            onClose={() => setPageAlert((s) => ({ ...s, visible: false }))}
+          />
+        </div>
+      )}
+
+      {loading &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999999999] flex items-center justify-center bg-black/60 backdrop-blur-md">
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-14 w-14 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
+              <p className="text-sm text-white font-medium">Loading</p>
+            </div>
+          </div>,
+          document.body,
+        )}
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Page Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -273,8 +371,8 @@ export default function Memberships() {
                 className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               >
                 <option value="all">All statuses</option>
-                <option value="1">Pending</option>
-                <option value="2">Approved</option>
+                <option value="2">Pending</option>
+                <option value="1">Approved</option>
               </select>
 
               <ChevronDown
@@ -316,7 +414,7 @@ export default function Memberships() {
                   <TableLoadingRows />
                 ) : filteredMembers.length > 0 ? (
                   filteredMembers.map((member) => {
-                    const isPending = String(member.status) === "1";
+                    const isPending = String(member.membershipStatus) === "2";
                     const isApproving = approvingId === member.id;
 
                     return (
@@ -379,7 +477,7 @@ export default function Memberships() {
                         </td>
 
                         <td className="px-5 py-4">
-                          {getStatusBadge(member.status)}
+                          {getStatusBadge(member.membershipStatus)}
                         </td>
 
                         <td className="px-5 py-4">
@@ -396,7 +494,7 @@ export default function Memberships() {
                             {isPending ? (
                               <button
                                 type="button"
-                                onClick={() => handleApproveMember(member)}
+                                onClick={() => handleOpenApproveModal(member)}
                                 disabled={isApproving}
                                 className="inline-flex cursor-pointer h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
                               >
@@ -416,10 +514,15 @@ export default function Memberships() {
                                 )}
                               </button>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600">
-                                <CheckCircle2 size={16} />
-                                Approved
-                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {handleViewMember(member);
+                                }}
+                                className="inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-lg bg-gray-500 text-white transition hover:bg-gray-600"
+                                title="View Member"
+                              >
+                                <EyeIcon size={18} />
+                              </button>
                             )}
                           </div>
                         </td>
@@ -443,7 +546,7 @@ export default function Memberships() {
               <MobileLoadingCards />
             ) : filteredMembers.length > 0 ? (
               filteredMembers.map((member) => {
-                const isPending = String(member.status) === "1";
+                const isPending = String(member.membershipStatus) === "1";
                 const isApproving = approvingId === member.id;
 
                 return (
@@ -465,7 +568,7 @@ export default function Memberships() {
                         </div>
                       </div>
 
-                      {getStatusBadge(member.status)}
+                      {getStatusBadge(member.membershipStatus)}
                     </div>
 
                     <div className="mb-4 space-y-2 rounded-xl bg-slate-50 p-3">
@@ -503,7 +606,7 @@ export default function Memberships() {
                     {isPending ? (
                       <button
                         type="button"
-                        onClick={() => handleApproveMember(member)}
+                        onClick={() => handleOpenApproveModal(member)}
                         disabled={isApproving}
                         className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                       >
@@ -551,6 +654,19 @@ export default function Memberships() {
           )}
         </section>
       </div>
+      {selectedMember && (
+        <MemberApprovalModal
+          member={selectedMember}
+          confirmed={isApprovalConfirmed}
+          isApproving={approvingId === selectedMember.id}
+          onConfirmedChange={setIsApprovalConfirmed}
+          onClose={handleCloseMemberModal}
+          onApprove={handleApproveMember}
+          getInitials={getInitials}
+          getStatusBadge={getStatusBadge}
+          viewOnly={isViewingMember}
+        />
+      )}
     </main>
   );
 }
@@ -561,6 +677,327 @@ type SummaryCardProps = {
   icon: React.ReactNode;
   iconClassName: string;
 };
+
+type MemberApprovalModalProps = {
+  member: Member;
+  confirmed: boolean;
+  isApproving: boolean;
+  viewOnly?: boolean;
+  onConfirmedChange: (confirmed: boolean) => void;
+  onClose: () => void;
+  onApprove: () => void;
+  getInitials: (firstName: string, lastName: string) => string;
+  getStatusBadge: (status: string | number) => React.ReactNode;
+};
+
+function MemberApprovalModal({
+  member,
+  confirmed,
+  isApproving,
+  onConfirmedChange,
+  onClose,
+  onApprove,
+  getInitials,
+  getStatusBadge,
+  viewOnly
+}: MemberApprovalModalProps) {
+  const formatDate = (date: string | null) => {
+    if (!date) return "Not available";
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return date;
+    }
+
+    return parsedDate.toLocaleDateString("en-LK", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const getGender = (gender: number) => {
+    if (gender === 1) return "Male";
+    if (gender === 2) return "Female";
+
+    return "Not specified";
+  };
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+        {/* Header */}
+        <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
+              <ShieldCheck size={22} />
+            </div>
+
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
+                {viewOnly ? "Member Details" : "Approve Membership"}
+              </h2>
+
+              <p className="text-sm text-slate-500">
+                {viewOnly
+                  ? "Review the member details below."
+                  : "Please review the member details below and confirm approval."}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isApproving}
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Close modal"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto px-5 py-5 sm:px-6">
+          {/* Member Header */}
+          <div className="mb-5 flex flex-col gap-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-3">
+              {member.profilePicture ? (
+                <img
+                  src={member.profilePicture}
+                  alt={`${member.firstName} ${member.lastName}`}
+                  className="h-14 w-14 shrink-0 rounded-2xl object-cover ring-2 ring-white"
+                />
+              ) : (
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-lg font-bold text-white shadow-sm">
+                  {getInitials(member.firstName, member.lastName)}
+                </div>
+              )}
+
+              <div className="min-w-0">
+                <h3 className="truncate text-lg font-bold text-slate-900">
+                  {member.firstName} {member.lastName}
+                </h3>
+
+                <p className="truncate text-sm font-medium text-slate-500">
+                  {member.memberId || "Member ID not available"}
+                </p>
+              </div>
+            </div>
+
+            <div className="shrink-0">{getStatusBadge(member.status)}</div>
+          </div>
+
+          {/* Personal Details */}
+          <section className="mb-5">
+            <div className="mb-3 flex items-center gap-2">
+              <User size={17} className="text-blue-600" />
+
+              <h3 className="font-semibold text-slate-900">
+                Personal information
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 sm:grid-cols-2">
+              <MemberDetail
+                label="First name"
+                value={member.firstName || "Not provided"}
+              />
+
+              <MemberDetail
+                label="Last name"
+                value={member.lastName || "Not provided"}
+              />
+
+              <MemberDetail
+                label="Username"
+                value={member.userName ? `@${member.userName}` : "Not provided"}
+              />
+
+              <MemberDetail label="Gender" value={getGender(member.gender)} />
+            </div>
+          </section>
+
+          {/* Contact Details */}
+          <section className="mb-5">
+            <div className="mb-3 flex items-center gap-2">
+              <Phone size={17} className="text-blue-600" />
+
+              <h3 className="font-semibold text-slate-900">
+                Contact information
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 sm:grid-cols-2">
+              <MemberDetail
+                icon={<Mail size={15} />}
+                label="Email address"
+                value={member.email || "Not provided"}
+              />
+
+              <MemberDetail
+                icon={<Phone size={15} />}
+                label="Phone number"
+                value={member.phone || "Not provided"}
+              />
+            </div>
+          </section>
+
+          {/* Membership Details */}
+          <section className="mb-5">
+            <div className="mb-3 flex items-center gap-2">
+              <CreditCard size={17} className="text-blue-600" />
+
+              <h3 className="font-semibold text-slate-900">
+                Membership information
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 sm:grid-cols-2">
+              <MemberDetail
+                label="Member ID"
+                value={member.memberId || "Not assigned"}
+              />
+
+              <MemberDetail
+                label="Payment status"
+                value={member.isPaid ? "Paid" : "Not paid"}
+                valueClassName={
+                  member.isPaid ? "text-emerald-700" : "text-amber-700"
+                }
+              />
+
+              <MemberDetail
+                icon={<CalendarDays size={15} />}
+                label="Start date"
+                value={formatDate(member.startDate)}
+              />
+
+              <MemberDetail
+                icon={<CalendarDays size={15} />}
+                label="End date"
+                value={formatDate(member.endDate)}
+              />
+
+              {/* <MemberDetail
+                label="Account status"
+                value={
+                  String(member.status) === "2"
+                    ? "Approved"
+                    : "Pending approval"
+                }
+              />
+
+              <MemberDetail
+                label="Membership status"
+                value={String(member.membershipStatus)}
+              /> */}
+            </div>
+          </section>
+
+          {!viewOnly && (
+          <label
+            className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${
+              confirmed
+                ? "border-blue-300 bg-blue-50"
+                : "border-slate-200 bg-slate-50 hover:border-blue-200"
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={confirmed}
+              onChange={(event) => onConfirmedChange(event.target.checked)}
+              disabled={isApproving}
+              className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 accent-blue-600 disabled:cursor-not-allowed"
+            />
+
+            <div>
+              <p className="text-sm font-semibold text-slate-900">
+                Confirm membership approval
+              </p>
+
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                I have reviewed the member details and confirm that this
+                membership request can be approved.
+              </p>
+            </div>
+          </label>
+          )}
+          
+        </div>
+
+        {!viewOnly && (
+          <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isApproving}
+            className="inline-flex h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onApprove}
+            disabled={!confirmed || isApproving}
+            className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+          >
+            {isApproving ? (
+              <>
+                <RefreshCcw size={17} className="animate-spin" />
+                Approving member
+              </>
+            ) : (
+              <>
+                <CheckCircle2 size={17} />
+                Approve membership
+              </>
+            )}
+          </button>
+        </div>
+        )}
+        
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+type MemberDetailProps = {
+  label: string;
+  value: React.ReactNode;
+  icon?: React.ReactNode;
+  valueClassName?: string;
+};
+
+function MemberDetail({
+  label,
+  value,
+  icon,
+  valueClassName = "text-slate-800",
+}: MemberDetailProps) {
+  return (
+    <div className="border-b border-slate-200 p-4 last:border-b-0 sm:border-r sm:[&:nth-child(2n)]:border-r-0">
+      <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+        {icon}
+        {label}
+      </div>
+
+      <p className={`break-words text-sm font-semibold ${valueClassName}`}>
+        {value}
+      </p>
+    </div>
+  );
+}
 
 function SummaryCard({ title, value, icon, iconClassName }: SummaryCardProps) {
   return (
