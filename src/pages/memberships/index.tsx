@@ -58,21 +58,18 @@ export default function Memberships() {
     description?: string;
   }>({ visible: false });
   const [isViewingMember, setIsViewingMember] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
-  const handleOpenViewMemberModal = (member: Member) => {
+  const handleOpenApproveModal = (member: Member) => {
     setSelectedMember(member);
-    setIsViewingMember(true);
-  }
+    setIsViewingMember(false);
+    setIsApprovalConfirmed(false);
+  };
 
-const handleOpenApproveModal = (member: Member) => {
-  setSelectedMember(member);
-  setIsViewingMember(false);
-  setIsApprovalConfirmed(false);
-};
-
-const handleCloseApproveModal = () => {
-  handleCloseMemberModal();
-};
+  const handleCloseApproveModal = () => {
+    handleCloseMemberModal();
+  };
 
   const handleApproveMember = async () => {
     if (!selectedMember || !isApprovalConfirmed) return;
@@ -194,18 +191,18 @@ const handleCloseApproveModal = () => {
   };
 
   const handleViewMember = (member: Member) => {
-  setSelectedMember(member);
-  setIsViewingMember(true);
-  setIsApprovalConfirmed(false);
-};
+    setSelectedMember(member);
+    setIsViewingMember(true);
+    setIsApprovalConfirmed(false);
+  };
 
-const handleCloseMemberModal = () => {
-  if (approvingId) return;
+  const handleCloseMemberModal = () => {
+    if (approvingId) return;
 
-  setSelectedMember(null);
-  setIsViewingMember(false);
-  setIsApprovalConfirmed(false);
-};
+    setSelectedMember(null);
+    setIsViewingMember(false);
+    setIsApprovalConfirmed(false);
+  };
 
   const filteredMembers = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();
@@ -231,6 +228,30 @@ const handleCloseMemberModal = () => {
     });
   }, [members, searchTerm, statusFilter]);
 
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredMembers.length / itemsPerPage),
+  );
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  const paginatedMembers = useMemo(() => {
+    return filteredMembers.slice(startIndex, endIndex);
+  }, [filteredMembers, startIndex, endIndex]);
+
+  const showingFrom = filteredMembers.length === 0 ? 0 : startIndex + 1;
+  const showingTo = Math.min(endIndex, filteredMembers.length);
+
+  useEffect(() => {
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
+}, [currentPage, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, itemsPerPage]);
   const pendingCount = members.filter(
     (member) => String(member.membershipStatus) === "2",
   ).length;
@@ -266,7 +287,7 @@ const handleCloseMemberModal = () => {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen">
       {pageAlert.visible && (
         <div>
           <Alert
@@ -412,8 +433,8 @@ const handleCloseMemberModal = () => {
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
                   <TableLoadingRows />
-                ) : filteredMembers.length > 0 ? (
-                  filteredMembers.map((member) => {
+                ) : paginatedMembers.length > 0 ? (
+                  paginatedMembers.map((member) => {
                     const isPending = String(member.membershipStatus) === "2";
                     const isApproving = approvingId === member.id;
 
@@ -516,7 +537,8 @@ const handleCloseMemberModal = () => {
                             ) : (
                               <button
                                 type="button"
-                                onClick={() => {handleViewMember(member);
+                                onClick={() => {
+                                  handleViewMember(member);
                                 }}
                                 className="inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-lg bg-gray-500 text-white transition hover:bg-gray-600"
                                 title="View Member"
@@ -544,9 +566,9 @@ const handleCloseMemberModal = () => {
           <div className="divide-y divide-slate-100 md:hidden">
             {isLoading ? (
               <MobileLoadingCards />
-            ) : filteredMembers.length > 0 ? (
-              filteredMembers.map((member) => {
-                const isPending = String(member.membershipStatus) === "1";
+            ) : paginatedMembers.length > 0 ? (
+              paginatedMembers.map((member) => {
+                const isPending = String(member.membershipStatus) === "2";
                 const isApproving = approvingId === member.id;
 
                 return (
@@ -636,22 +658,122 @@ const handleCloseMemberModal = () => {
             )}
           </div>
 
-          {/* Footer */}
-          {!isLoading && filteredMembers.length > 0 && (
-            <div className="border-t border-slate-200 bg-slate-50/60 px-4 py-3">
-              <p className="text-sm text-slate-500">
-                Showing{" "}
-                <span className="font-semibold text-slate-700">
-                  {filteredMembers.length}
-                </span>{" "}
-                of{" "}
-                <span className="font-semibold text-slate-700">
-                  {members.length}
-                </span>{" "}
-                members
-              </p>
-            </div>
-          )}
+          {/* Pagination Footer */}
+{!isLoading && filteredMembers.length > 0 && (
+  <div className="flex flex-col gap-4 border-t border-slate-200 bg-slate-50/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+      <p className="text-sm text-slate-500">
+        Showing{" "}
+        <span className="font-semibold text-slate-700">
+          {showingFrom}
+        </span>{" "}
+        to{" "}
+        <span className="font-semibold text-slate-700">
+          {showingTo}
+        </span>{" "}
+        of{" "}
+        <span className="font-semibold text-slate-700">
+          {filteredMembers.length}
+        </span>{" "}
+        members
+      </p>
+
+      <div className="flex items-center gap-2">
+        <label
+          htmlFor="items-per-page"
+          className="text-xs font-medium text-slate-500"
+        >
+          Rows:
+        </label>
+
+        <select
+          id="items-per-page"
+          value={itemsPerPage}
+          onChange={(event) => {
+            setItemsPerPage(Number(event.target.value));
+            setCurrentPage(1);
+          }}
+          className="h-9 cursor-pointer rounded-lg border border-slate-200 bg-white px-2 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        >
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+        </select>
+      </div>
+    </div>
+
+    <div className="flex items-center justify-between gap-2 sm:justify-end">
+      <button
+        type="button"
+        onClick={() =>
+          setCurrentPage((previousPage) =>
+            Math.max(previousPage - 1, 1),
+          )
+        }
+        disabled={currentPage === 1}
+        className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700"
+      >
+        Previous
+      </button>
+
+      <div className="hidden items-center gap-1 sm:flex">
+        {Array.from({ length: totalPages }, (_, index) => index + 1)
+          .filter((page) => {
+            return (
+              page === 1 ||
+              page === totalPages ||
+              Math.abs(page - currentPage) <= 1
+            );
+          })
+          .map((page, index, visiblePages) => {
+            const previousPage = visiblePages[index - 1];
+            const showEllipsis =
+              previousPage !== undefined && page - previousPage > 1;
+
+            return (
+              <div key={page} className="flex items-center gap-1">
+                {showEllipsis && (
+                  <span className="flex h-9 w-9 items-center justify-center text-sm text-slate-400">
+                    ...
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  className={`flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-lg px-3 text-sm font-semibold transition ${
+                    currentPage === page
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "border border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                  }`}
+                >
+                  {page}
+                </button>
+              </div>
+            );
+          })}
+      </div>
+
+      <span className="text-sm font-semibold text-slate-600 sm:hidden">
+        {currentPage} / {totalPages}
+      </span>
+
+      <button
+        type="button"
+        onClick={() =>
+          setCurrentPage((previousPage) =>
+            Math.min(previousPage + 1, totalPages),
+          )
+        }
+        disabled={currentPage === totalPages}
+        className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+)}
         </section>
       </div>
       {selectedMember && (
@@ -699,7 +821,7 @@ function MemberApprovalModal({
   onApprove,
   getInitials,
   getStatusBadge,
-  viewOnly
+  viewOnly,
 }: MemberApprovalModalProps) {
   const formatDate = (date: string | null) => {
     if (!date) return "Not available";
@@ -904,68 +1026,66 @@ function MemberApprovalModal({
           </section>
 
           {!viewOnly && (
-          <label
-            className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${
-              confirmed
-                ? "border-blue-300 bg-blue-50"
-                : "border-slate-200 bg-slate-50 hover:border-blue-200"
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={confirmed}
-              onChange={(event) => onConfirmedChange(event.target.checked)}
-              disabled={isApproving}
-              className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 accent-blue-600 disabled:cursor-not-allowed"
-            />
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${
+                confirmed
+                  ? "border-blue-300 bg-blue-50"
+                  : "border-slate-200 bg-slate-50 hover:border-blue-200"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={confirmed}
+                onChange={(event) => onConfirmedChange(event.target.checked)}
+                disabled={isApproving}
+                className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 accent-blue-600 disabled:cursor-not-allowed"
+              />
 
-            <div>
-              <p className="text-sm font-semibold text-slate-900">
-                Confirm membership approval
-              </p>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  Confirm membership approval
+                </p>
 
-              <p className="mt-1 text-xs leading-5 text-slate-500">
-                I have reviewed the member details and confirm that this
-                membership request can be approved.
-              </p>
-            </div>
-          </label>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  I have reviewed the member details and confirm that this
+                  membership request can be approved.
+                </p>
+              </div>
+            </label>
           )}
-          
         </div>
 
         {!viewOnly && (
           <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isApproving}
-            className="inline-flex h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Cancel
-          </button>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isApproving}
+              className="inline-flex h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Cancel
+            </button>
 
-          <button
-            type="button"
-            onClick={onApprove}
-            disabled={!confirmed || isApproving}
-            className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
-          >
-            {isApproving ? (
-              <>
-                <RefreshCcw size={17} className="animate-spin" />
-                Approving member
-              </>
-            ) : (
-              <>
-                <CheckCircle2 size={17} />
-                Approve membership
-              </>
-            )}
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={onApprove}
+              disabled={!confirmed || isApproving}
+              className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+            >
+              {isApproving ? (
+                <>
+                  <RefreshCcw size={17} className="animate-spin" />
+                  Approving member
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={17} />
+                  Approve membership
+                </>
+              )}
+            </button>
+          </div>
         )}
-        
       </div>
     </div>,
     document.body,
