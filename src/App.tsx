@@ -11,12 +11,12 @@ function App() {
       <Route path="/" element={<Login />} />
       
       {/* Admin Dashboard Routes */}
-      <Route element={<AdminLayout><Dashboard /></AdminLayout>} path="/dashboard" />
-      <Route element={<AdminLayout><SettingsPage /></AdminLayout>} path="/settings" />
-      <Route element={<AdminLayout><Memberships /></AdminLayout>} path="/memberships" />
+      <Route element={<AdminLayout><Dashboard /></AdminLayout>} path="/main/dashboard" />
+      <Route element={<AdminLayout><SettingsPage /></AdminLayout>} path="/main/settings" />
+      <Route element={<AdminLayout><Memberships /></AdminLayout>} path="/main/memberships" />
       
       {/* Redirect to dashboard */}
-      <Route path="*" element={<Navigate to="/dashboard" />} />
+      <Route path="*" element={<Navigate to="/main/dashboard" />} />
     </Routes>
   )
 }

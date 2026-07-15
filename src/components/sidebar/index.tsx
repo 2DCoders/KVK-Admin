@@ -1,5 +1,18 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Settings, ChevronDown, Calendar, Gauge } from "lucide-react";
+import {
+  Settings,
+  ChevronDown,
+  Calendar,
+  Gauge,
+  LayoutGrid,
+  Dumbbell,
+  Car,
+  Trophy,
+  Gamepad2,
+  Coffee,
+  ShoppingBag,
+  Globe,
+} from "lucide-react";
 import { useState } from "react";
 
 interface SidebarProps {
@@ -22,22 +35,21 @@ interface NavItem {
   submenu: NavSubitem[] | null;
 }
 
+interface ModuleItem {
+  id: string;
+  label: string;
+  path: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}
+
 export default function Sidebar({ isOpen, isMobile, onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+
   const collapsed = !isOpen && !isMobile;
+
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-
-  const toggleMenu = (id: string) => {
-    setOpenMenu((prev) => (prev === id ? null : id));
-  };
-
-  const isParentActive = (item: NavItem) => {
-    return (
-      item.submenu?.some((subitem) => location.pathname === subitem.path) ??
-      false
-    );
-  };
+  const [isModulesOpen, setIsModulesOpen] = useState(false);
 
   const admin = localStorage.getItem("admin")
     ? JSON.parse(localStorage.getItem("admin") as string)
@@ -48,55 +60,77 @@ export default function Sidebar({ isOpen, isMobile, onClose }: SidebarProps) {
       id: "dashboard",
       label: "Dashboard",
       icon: Gauge,
-      path: "/dashboard",
+      path: "/main/dashboard",
       submenu: null,
     },
-    // {
-    //   id: "system-settings",
-    //   label: "System Settings",
-    //   icon: Settings,
-    //   path: "",
-    //   submenu: [
-    //     {
-    //       id: "pc-settings",
-    //       label: "PC Settings",
-    //       path: "/pc-settings",
-    //     },
-    //     {
-    //       id: "ps5-settings",
-    //       label: "PS5 Settings",
-    //       path: "/ps5-settings",
-    //     },
-    //     {
-    //       id: "pool-settings",
-    //       label: "Pool Settings",
-    //       path: "/pool-settings",
-    //     },
-    //     {
-    //       id: "movie-room-settings",
-    //       label: "Movie Room Settings",
-    //       path: "/movie-rooms-settings",
-    //     },
-    //   ],
-    // },
     {
       id: "memberships",
       label: "Memberships",
       icon: Calendar,
-      path: "/memberships",
+      path: "/main/memberships",
       submenu: null,
     },
     {
       id: "settings",
       label: "Settings",
       icon: Settings,
-      path: "/settings",
+      path: "/main/settings",
       submenu: null,
     },
   ];
 
+  const modules: ModuleItem[] = [
+    {
+      id: "main",
+      label: "MAIN",
+      icon: Globe,
+      path: "/main",
+    },
+    {
+      id: "gym",
+      label: "GYM",
+      icon: Dumbbell,
+      path: "/gym",
+    },
+    {
+      id: "car-wash",
+      label: "CAR WASH",
+      icon: Car,
+      path: "/car-wash",
+    },
+    {
+      id: "badminton",
+      label: "BADMINTON",
+      icon: Trophy,
+      path: "/badminton",
+    },
+    {
+      id: "gaming",
+      label: "GAMING",
+      icon: Gamepad2,
+      path: "/gaming",
+    },
+    {
+      id: "cafe",
+      label: "CAFE",
+      icon: Coffee,
+      path: "/cafe",
+    },
+    {
+      id: "retail",
+      label: "RETAIL",
+      icon: ShoppingBag,
+      path: "/retail",
+    },
+  ];
+
+  const toggleMenu = (id: string) => {
+    setOpenMenu((prev) => (prev === id ? null : id));
+  };
+
   const handleNavigation = (path: string) => {
     navigate(path);
+
     if (isMobile && onClose) {
       onClose();
     }
@@ -104,147 +138,285 @@ export default function Sidebar({ isOpen, isMobile, onClose }: SidebarProps) {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Mobile drawer backdrop
+  const isParentActive = (item: NavItem) => {
+    return item.submenu?.some((subitem) => isActive(subitem.path)) ?? false;
+  };
+
+  const isModuleActive = modules.some(
+    (module) =>
+      location.pathname === module.path ||
+      location.pathname.startsWith(`${module.path}/`),
+  );
+
   if (isMobile && !isOpen) {
     return null;
   }
 
+  const selectedModule =
+    modules.find(
+      (module) =>
+        location.pathname === module.path ||
+        location.pathname.startsWith(`${module.path}/`),
+    ) ?? null;
+
   return (
-    <>
-      <aside
-        className={`${isMobile ? "fixed inset-y-0 left-0 z-40" : "relative"} h-full w-full bg-white border-r border-gray-200 shadow-[0_0_0_1px_rgba(15,23,42,0.03)] transition-all duration-300 ease-in-out ${isMobile ? (isOpen ? "translate-x-0" : "-translate-x-full") : ""} overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent`}
-      >
-        <div className="flex flex-col h-full">
-          {/* Brand Header */}
-          <div className="px-4 pt-4 pb-3 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-sm">
-                <span className="text-xs font-bold">KVK</span>
-              </div>
-              {!collapsed && (
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
-                    KVK Arena
-                  </p>
-                  <p className="text-xs text-gray-500">admin Panel</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-3 py-3 space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = item.submenu
-                ? isParentActive(item)
-                : isActive(item.path || "");
-
-              const isOpen = openMenu === item.id;
-
-              const btnBase = `w-full cursor-pointer flex items-center ${collapsed ? "justify-center" : "justify-between"} ${collapsed ? "px-2" : "px-3"} py-1.5 rounded-xl transition-colors duration-150`;
-              const iconWrapper = `${active ? "bg-blue-600 text-white" : "text-gray-400"} w-8 h-8 flex items-center justify-center rounded-lg transition`;
-
-              return (
-                <div key={item.id}>
-                  <button
-                    onClick={() => {
-
-                      item.submenu
-                        ? toggleMenu(item.id)
-                        : handleNavigation(item.path!);
-                    }}
-                    className={`${btnBase}
-    ${active && !collapsed
-                        ? "bg-blue-50 text-blue-700 shadow-sm"
-                        : "text-gray-700 hover:bg-gray-50"
-                      }
-  `}
-                  >
-                    <div
-                      className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""
-                        }`}
-                    >
-                      <span className={iconWrapper}>
-                        <Icon size={16} />
-                      </span>
-
-                      {!collapsed && (
-                        <span
-                          className={`text-sm ${active
-                            ? "text-blue-700 font-semibold"
-                            : "text-gray-700"
-                            }`}
-                        >
-                          {item.label}
-                        </span>
-                      )}
-                    </div>
-
-                    {!collapsed && item.submenu && (
-                      <ChevronDown
-                        size={16}
-                        className={`text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""
-                          }`}
-                      />
-                    )}
-                  </button>
-
-                  {/* Submenu */}
-                  {item.submenu && isOpen && !collapsed && (
-                    <div className="ml-11 mt-1 space-y-1">
-                      {item.submenu.map((subitem) => (
-                        <button
-                          key={subitem.id}
-                          onClick={() => handleNavigation(subitem.path)}
-                          className={`w-full text-left px-3 py-2 text-sm rounded-lg transition cursor-pointer ${isActive(subitem.path)
-                            ? "bg-blue-50 text-blue-700 font-medium"
-                            : "text-gray-600 hover:bg-gray-50"
-                            }`}
-                        >
-                          {subitem.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
-
-          {/* Footer */}
-          <div className="mt-auto px-4 pb-4 pt-3 border-t border-gray-100 space-y-3">
-            <div className="flex items-center gap-2 text-xs text-emerald-600">
-              {!collapsed && (
-                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-              )}
-              {!collapsed && <span>System online</span>}
+    <aside
+      className={`${
+        isMobile ? "fixed inset-y-0 left-0 z-40" : "relative"
+      } h-full w-full overflow-y-auto border-r border-gray-200 bg-white shadow-[0_0_0_1px_rgba(15,23,42,0.03)] transition-all duration-300 ease-in-out ${
+        isMobile ? (isOpen ? "translate-x-0" : "-translate-x-full") : ""
+      } scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300`}
+    >
+      <div className="flex h-full flex-col">
+        {/* Brand Header */}
+        <div className="border-b border-gray-100 px-4 pb-3 pt-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+              <span className="text-xs font-bold">KVK</span>
             </div>
 
             {!collapsed && (
-              <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 shadow-sm">
-                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-semibold">
-                  {admin?.firstName?.charAt(0)}
-                  {admin?.lastName?.charAt(0)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
-                    {admin?.firstName} {admin?.lastName}
-                  </p>
-                  <p className="text-xs text-gray-500">{admin?.email}</p>
-                </div>
-              </div>
-            )}
-
-            {collapsed && (
-              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-semibold">
-                {admin?.firstName?.charAt(0)}
-                {admin?.lastName?.charAt(0)}
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-gray-900">
+                  KVK Arena
+                </p>
+                <p className="text-xs text-gray-500">Admin Panel</p>
               </div>
             )}
           </div>
         </div>
-      </aside>
-    </>
+
+        {/* Navigation */}
+        <nav className="flex-1 space-y-1 px-3 py-3">
+          {/* Modules */}
+          <div className="mb-4">
+            <button
+              onClick={() => !collapsed && setIsModulesOpen(!isModulesOpen)}
+              className={`w-full rounded-xl border transition-all duration-200 cursor-pointer
+      ${
+        isModuleActive
+          ? "border-blue-200 bg-blue-50"
+          : "border-gray-200 bg-white hover:border-blue-200 hover:bg-gray-50"
+      }
+      ${collapsed ? "p-2 flex justify-center" : "px-4 py-3"}
+    `}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-lg
+          ${
+            isModuleActive
+              ? "bg-blue-100 text-blue-600"
+              : "bg-gray-100 text-gray-600"
+          }`}
+                  >
+                    {selectedModule ? (
+                      <selectedModule.icon size={18} />
+                    ) : (
+                      <LayoutGrid size={18} />
+                    )}
+                  </div>
+
+                  {!collapsed && (
+                    <div className="text-left">
+                      <div className="text-left">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {selectedModule?.label ?? "Modules"}
+                        </p>
+
+                        <p className="text-xs text-gray-500">
+                          {selectedModule
+                            ? "Current module"
+                            : "Select a service module"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {!collapsed && (
+                  <ChevronDown
+                    size={18}
+                    className={`text-gray-400 transition-transform duration-200 ${
+                      isModulesOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                )}
+              </div>
+            </button>
+
+            {!collapsed && isModulesOpen && (
+              <div className="mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white">
+                {modules.map((module) => {
+                  const Icon = module.icon;
+
+                  const active =
+                    location.pathname === module.path ||
+                    location.pathname.startsWith(module.path + "/");
+
+                  return (
+                    <button
+                      key={module.id}
+                      onClick={() => handleNavigation(module.path)}
+                      className={`flex w-full items-center gap-3 px-4 py-3 text-left transition cursor-pointer
+              ${
+                active
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-50"
+              }`}
+                    >
+                      <Icon
+                        size={17}
+                        className={active ? "text-blue-600" : "text-gray-500"}
+                      />
+
+                      <span className="text-sm font-medium">
+                        {module.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Main navigation separator */}
+          {!collapsed && (
+            <div className="mb-2 flex items-center gap-2 px-2">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400">
+                Main Menu
+              </span>
+              <div className="h-px flex-1 bg-gray-200" />
+            </div>
+          )}
+
+          {navItems.map((item) => {
+            const Icon = item.icon;
+
+            const active = item.submenu
+              ? isParentActive(item)
+              : isActive(item.path || "");
+
+            const submenuOpen = openMenu === item.id;
+
+            const btnBase = `flex w-full cursor-pointer items-center ${
+              collapsed ? "justify-center px-2" : "justify-between px-3"
+            } rounded-xl py-1.5 transition-colors duration-150`;
+
+            const iconWrapper = `${
+              active ? "bg-blue-600 text-white" : "bg-transparent text-gray-400"
+            } flex h-8 w-8 items-center justify-center rounded-lg transition`;
+
+            return (
+              <div key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (item.submenu) {
+                      toggleMenu(item.id);
+                    } else if (item.path) {
+                      handleNavigation(item.path);
+                    }
+                  }}
+                  title={collapsed ? item.label : undefined}
+                  className={`${btnBase} ${
+                    active && !collapsed
+                      ? "bg-blue-50 text-blue-700 shadow-sm"
+                      : "text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  <div
+                    className={`flex items-center gap-3 ${
+                      collapsed ? "justify-center" : ""
+                    }`}
+                  >
+                    <span className={iconWrapper}>
+                      <Icon size={16} />
+                    </span>
+
+                    {!collapsed && (
+                      <span
+                        className={`text-sm ${
+                          active
+                            ? "font-semibold text-blue-700"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                    )}
+                  </div>
+
+                  {!collapsed && item.submenu && (
+                    <ChevronDown
+                      size={16}
+                      className={`text-gray-400 transition-transform ${
+                        submenuOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  )}
+                </button>
+
+                {/* Normal Submenu */}
+                {item.submenu && submenuOpen && !collapsed && (
+                  <div className="ml-11 mt-1 space-y-1">
+                    {item.submenu.map((subitem) => (
+                      <button
+                        type="button"
+                        key={subitem.id}
+                        onClick={() => handleNavigation(subitem.path)}
+                        className={`w-full cursor-pointer rounded-lg px-3 py-2 text-left text-sm transition ${
+                          isActive(subitem.path)
+                            ? "bg-blue-50 font-medium text-blue-700"
+                            : "text-gray-600 hover:bg-gray-50"
+                        }`}
+                      >
+                        {subitem.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="mt-auto space-y-3 border-t border-gray-100 px-4 pb-4 pt-3">
+          {!collapsed && (
+            <div className="flex items-center gap-2 text-xs text-emerald-600">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <span>System online</span>
+            </div>
+          )}
+
+          {!collapsed && (
+            <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 shadow-sm">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
+                {admin?.firstName?.charAt(0)}
+                {admin?.lastName?.charAt(0)}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-gray-900">
+                  {admin?.firstName} {admin?.lastName}
+                </p>
+                <p className="truncate text-xs text-gray-500">{admin?.email}</p>
+              </div>
+            </div>
+          )}
+
+          {collapsed && (
+            <div className="flex justify-center">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
+                {admin?.firstName?.charAt(0)}
+                {admin?.lastName?.charAt(0)}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </aside>
   );
 }

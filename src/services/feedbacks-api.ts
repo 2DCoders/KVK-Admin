@@ -2,7 +2,7 @@ import axios from "axios";
 import { getEnv } from "@/env";
 
 const { API_URL } = getEnv();
-const HOLIDAYS_API_URL = `${API_URL}identity/holidays/`;
+const FEEDBACKS_API_URL = `${API_URL}identity/customer-feedback/`;
 
 const getToken = () => {
   const admin = localStorage.getItem("admin")
@@ -12,9 +12,9 @@ const getToken = () => {
   return admin ? admin.token : null;
 };
 
-export const getNextWorkingDays = async (startDate: string, count: number) => {
+export const getFeedbacks = async () => {
     try {
-        const response = await axios.get(`${HOLIDAYS_API_URL}next-working-days?startDate=${startDate}&count=${count}`, {
+        const response = await axios.get(FEEDBACKS_API_URL, {
             headers: {
                 Authorization: `Bearer ${getToken()}`
             }

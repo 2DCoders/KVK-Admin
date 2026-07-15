@@ -39,7 +39,7 @@ export default function Login() {
     try {
       const admin = await login(formData.userId, formData.password);
       localStorage.setItem("admin", JSON.stringify(admin));
-      navigate("/dashboard");
+      navigate("/main/dashboard");
     } catch (error) {
       setPageAlert({
         visible: true,
