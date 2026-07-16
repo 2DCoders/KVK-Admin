@@ -235,7 +235,7 @@ export default function GymPayments() {
                       >
                         <td className="py-2 px-3 align-top">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-semibold">
+                            <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-900 flex items-center justify-center text-sm font-semibold">
                               {payment.memberFirstName?.charAt(0)}
                             </div>
 

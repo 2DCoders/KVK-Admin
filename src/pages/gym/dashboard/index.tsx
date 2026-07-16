@@ -7,7 +7,7 @@ export default function GymDashboard() {
         <div className="mx-auto max-w-xl text-center">
 
           {/* Badge */}
-          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm font-medium text-blue-700">
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-blue-900 bg-blue-50 px-4 py-1.5 text-sm font-medium text-blue-700">
             <Sparkles size={16} />
             Dashboard Coming Soon
           </div>
@@ -27,7 +27,7 @@ export default function GymDashboard() {
           {/* Features Preview */}
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-3xl font-bold text-blue-600">📊</div>
+              <div className="text-3xl font-bold text-blue-900">📊</div>
               <h3 className="mt-3 font-semibold text-slate-900">
                 Analytics
               </h3>
@@ -37,7 +37,7 @@ export default function GymDashboard() {
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-3xl font-bold text-blue-600">⚡</div>
+              <div className="text-3xl font-bold text-blue-900">⚡</div>
               <h3 className="mt-3 font-semibold text-slate-900">
                 Live Status
               </h3>
@@ -47,7 +47,7 @@ export default function GymDashboard() {
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-3xl font-bold text-blue-600">📈</div>
+              <div className="text-3xl font-bold text-blue-900">📈</div>
               <h3 className="mt-3 font-semibold text-slate-900">
                 Reports
               </h3>

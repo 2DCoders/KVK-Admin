@@ -314,7 +314,7 @@ export default function Memberships() {
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="mb-1 flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-200">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-900 text-white shadow-sm shadow-blue-900">
                 <Users size={20} />
               </div>
 
@@ -333,7 +333,7 @@ export default function Memberships() {
             type="button"
             onClick={handleFetchMembers}
             disabled={isLoading}
-            className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <RefreshCcw size={16} className={isLoading ? "animate-spin" : ""} />
             Refresh
@@ -346,7 +346,7 @@ export default function Memberships() {
             title="Total Members"
             value={members.length}
             icon={<Users size={20} />}
-            iconClassName="bg-blue-50 text-blue-600"
+            iconClassName="bg-blue-50 text-blue-900"
           />
 
           <SummaryCard
@@ -517,7 +517,7 @@ export default function Memberships() {
                                 type="button"
                                 onClick={() => handleOpenApproveModal(member)}
                                 disabled={isApproving}
-                                className="inline-flex cursor-pointer h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                                className="inline-flex cursor-pointer h-9 items-center gap-1.5 rounded-lg bg-blue-900 px-3.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
                               >
                                 {isApproving ? (
                                   <>
@@ -630,7 +630,7 @@ export default function Memberships() {
                         type="button"
                         onClick={() => handleOpenApproveModal(member)}
                         disabled={isApproving}
-                        className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-900 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isApproving ? (
                           <>
@@ -712,7 +712,7 @@ export default function Memberships() {
           )
         }
         disabled={currentPage === 1}
-        className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700"
+        className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700"
       >
         Previous
       </button>
@@ -744,8 +744,8 @@ export default function Memberships() {
                   onClick={() => setCurrentPage(page)}
                   className={`flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-lg px-3 text-sm font-semibold transition ${
                     currentPage === page
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "border border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                      ? "bg-blue-900 text-white shadow-sm"
+                      : "border border-slate-200 bg-white text-slate-700 hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700"
                   }`}
                 >
                   {page}
@@ -767,7 +767,7 @@ export default function Memberships() {
           )
         }
         disabled={currentPage === totalPages}
-        className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700"
+        className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700"
       >
         Next
       </button>
@@ -859,7 +859,7 @@ function MemberApprovalModal({
         {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-900 text-white">
               <ShieldCheck size={22} />
             </div>
 
@@ -921,7 +921,7 @@ function MemberApprovalModal({
           {/* Personal Details */}
           <section className="mb-5">
             <div className="mb-3 flex items-center gap-2">
-              <User size={17} className="text-blue-600" />
+              <User size={17} className="text-blue-900" />
 
               <h3 className="font-semibold text-slate-900">
                 Personal information
@@ -951,7 +951,7 @@ function MemberApprovalModal({
           {/* Contact Details */}
           <section className="mb-5">
             <div className="mb-3 flex items-center gap-2">
-              <Phone size={17} className="text-blue-600" />
+              <Phone size={17} className="text-blue-900" />
 
               <h3 className="font-semibold text-slate-900">
                 Contact information
@@ -976,7 +976,7 @@ function MemberApprovalModal({
           {/* Membership Details */}
           <section className="mb-5">
             <div className="mb-3 flex items-center gap-2">
-              <CreditCard size={17} className="text-blue-600" />
+              <CreditCard size={17} className="text-blue-900" />
 
               <h3 className="font-semibold text-slate-900">
                 Membership information
@@ -1030,7 +1030,7 @@ function MemberApprovalModal({
               className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${
                 confirmed
                   ? "border-blue-300 bg-blue-50"
-                  : "border-slate-200 bg-slate-50 hover:border-blue-200"
+                  : "border-slate-200 bg-slate-50 hover:border-blue-900"
               }`}
             >
               <input
@@ -1070,7 +1070,7 @@ function MemberApprovalModal({
               type="button"
               onClick={onApprove}
               disabled={!confirmed || isApproving}
-              className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+              className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
             >
               {isApproving ? (
                 <>

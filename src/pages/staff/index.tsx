@@ -1,4 +1,5 @@
 import { Alert } from "@/components/ui/alert";
+import { getStaffMembers } from "@/services/staff-api";
 import {
   Check,
   Dumbbell,
@@ -27,7 +28,7 @@ type StaffMember = {
   lastName: string;
   userName: string;
   email: string;
-  modules?: StaffModule[];
+  assignedModules?: StaffModule[];
 };
 
 type StaffForm = {
@@ -38,12 +39,12 @@ type StaffForm = {
 };
 
 type StaffModule =
-  | "GYM"
-  | "CARWASH"
-  | "GAMING"
-  | "BADMINTON"
-  | "CAFE"
-  | "RETAIL";
+  | "Gym"
+  | "CarWash"
+  | "GamingCenter"
+  | "BadmintonCourt"
+  | "Cafe"
+  | "Retail";
 
 type PageAlert = {
   visible: boolean;
@@ -68,37 +69,37 @@ const moduleOptions: {
   icon: ReactNode;
 }[] = [
   {
-    id: "GYM",
+    id: "Gym",
     label: "Gym",
     description: "Gym operations and membership management",
     icon: <Dumbbell size={18} />,
   },
   {
-    id: "CARWASH",
+    id: "CarWash",
     label: "Car Wash",
     description: "Car wash bookings and service management",
     icon: <WashingMachine size={18} />,
   },
   {
-    id: "GAMING",
+    id: "GamingCenter",
     label: "Gaming",
     description: "Gaming stations, bookings and availability",
     icon: <Gamepad2 size={18} />,
   },
   {
-    id: "BADMINTON",
+    id: "BadmintonCourt",
     label: "Badminton",
     description: "Court bookings and slot management",
     icon: <Trophy size={18} />,
   },
   {
-    id: "CAFE",
+    id: "Cafe",
     label: "Cafe",
     description: "Cafe orders and product management",
     icon: <Coffee size={18} />,
   },
   {
-    id: "RETAIL",
+    id: "Retail",
     label: "Retail",
     description: "Retail products, stock and sales",
     icon: <Store size={18} />,
@@ -129,45 +130,10 @@ export default function Staff() {
     try {
       setIsLoading(true);
 
-      /*
-       * Replace this mock section with your API:
-       *
-       * const response = await getStaffMembers();
-       * setStaffMembers(Array.isArray(response) ? response : []);
-       */
-
-      const mockStaff: StaffMember[] = [
-        {
-          id: "1",
-          firstName: "Kasun",
-          lastName: "Perera",
-          userName: "kasun.perera",
-          email: "kasun@kvkarena.lk",
-          modules: ["GYM", "BADMINTON"],
-        },
-        {
-          id: "2",
-          firstName: "Nimal",
-          lastName: "Fernando",
-          userName: "nimal.fernando",
-          email: "nimal@kvkarena.lk",
-          modules: ["GYM"],
-        },
-      ];
-
-      setStaffMembers(mockStaff);
+      const response = await getStaffMembers();
+      setStaffMembers(response);
     } catch (error) {
-      console.error("Failed to fetch staff members:", error);
-
       setStaffMembers([]);
-
-      setPageAlert({
-        visible: true,
-        variant: "error",
-        title: "Unable to load staff",
-        description:
-          "An error occurred while loading staff members. Please try again.",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -300,7 +266,7 @@ export default function Staff() {
       const newStaff: StaffMember = {
         id: crypto.randomUUID(),
         ...body,
-        modules: [],
+        assignedModules: [],
       };
 
       setStaffMembers((previous) => [newStaff, ...previous]);
@@ -330,7 +296,7 @@ export default function Staff() {
 
   const handleOpenModuleModal = (staff: StaffMember) => {
     setSelectedStaff(staff);
-    setSelectedModules(staff.modules ?? []);
+    setSelectedModules(staff.assignedModules ?? []);
     setIsModuleModalOpen(true);
   };
 
@@ -375,7 +341,7 @@ export default function Staff() {
           staff.id === selectedStaff.id
             ? {
                 ...staff,
-                modules: body.modules,
+                assignedModules: body.modules,
               }
             : staff,
         ),
@@ -442,7 +408,7 @@ export default function Staff() {
         {/* Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-200">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-900 text-white shadow-sm shadow-blue-900">
               <Users size={21} />
             </div>
 
@@ -462,7 +428,7 @@ export default function Staff() {
               type="button"
               onClick={handleFetchStaff}
               disabled={isLoading}
-              className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RefreshCcw
                 size={16}
@@ -474,7 +440,7 @@ export default function Staff() {
             <button
               type="button"
               onClick={handleOpenAddModal}
-              className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
               <Plus size={17} />
               Add Staff
@@ -488,13 +454,13 @@ export default function Staff() {
             title="Total Staff"
             value={staffMembers.length}
             icon={<Users size={20} />}
-            iconClassName="bg-blue-50 text-blue-600"
+            iconClassName="bg-blue-50 text-blue-900"
           />
 
           <SummaryCard
             title="Staff With Module Access"
             value={
-              staffMembers.filter((staff) => (staff.modules?.length ?? 0) > 0)
+              staffMembers.filter((staff) => (staff.assignedModules?.length ?? 0) > 0)
                 .length
             }
             icon={<ShieldCheck size={20} />}
@@ -560,7 +526,7 @@ export default function Staff() {
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-900 text-sm font-bold text-white shadow-sm">
                             {getInitials(staff.firstName, staff.lastName)}
                           </div>
 
@@ -594,13 +560,13 @@ export default function Staff() {
                           </span>
                         </div>
                       </td>
-                      
+
                       <td className="px-5 py-4">
                         <div className="flex justify-end">
                           <button
                             type="button"
                             onClick={() => handleOpenModuleModal(staff)}
-                            className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                            className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700"
                           >
                             <UserCog size={16} />
                             Assign Modules
@@ -626,7 +592,7 @@ export default function Staff() {
               filteredStaff.map((staff) => (
                 <article key={staff.id} className="p-4">
                   <div className="mb-4 flex items-center gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-900 text-sm font-bold text-white">
                       {getInitials(staff.firstName, staff.lastName)}
                     </div>
 
@@ -651,20 +617,12 @@ export default function Staff() {
                         {staff.email}
                       </p>
                     </div>
-
-                    <div>
-                      <p className="mb-2 text-xs font-medium text-slate-500">
-                        Assigned Modules
-                      </p>
-
-                      <ModuleBadges modules={staff.modules ?? []} />
-                    </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => handleOpenModuleModal(staff)}
-                    className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                    className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700"
                   >
                     <UserCog size={16} />
                     Assign Modules
@@ -732,7 +690,7 @@ function AddStaffModal({
       <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
         <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-900 text-white">
               <Plus size={21} />
             </div>
 
@@ -812,7 +770,7 @@ function AddStaffModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               {isSubmitting ? (
                 <>
@@ -863,7 +821,7 @@ function AssignModulesModal({
       <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
         <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-900 text-white">
               <ShieldCheck size={21} />
             </div>
 
@@ -909,7 +867,7 @@ function AssignModulesModal({
                   className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${
                     checked
                       ? "border-blue-300 bg-blue-50"
-                      : "border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50"
+                      : "border-slate-200 bg-white hover:border-blue-900 hover:bg-slate-50"
                   }`}
                 >
                   <input
@@ -923,7 +881,7 @@ function AssignModulesModal({
                   <div
                     className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
                       checked
-                        ? "bg-blue-600 text-white"
+                        ? "bg-blue-900 text-white"
                         : "bg-slate-100 text-slate-500"
                     }`}
                   >
@@ -939,7 +897,7 @@ function AssignModulesModal({
                       <div
                         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
                           checked
-                            ? "border-blue-600 bg-blue-600 text-white"
+                            ? "border-blue-600 bg-blue-900 text-white"
                             : "border-slate-300 bg-white"
                         }`}
                       >
@@ -977,7 +935,7 @@ function AssignModulesModal({
               type="button"
               onClick={onSave}
               disabled={isSubmitting}
-              className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               {isSubmitting ? (
                 <>
@@ -1062,7 +1020,7 @@ function ModuleBadges({ modules }: { modules: StaffModule[] }) {
       {visibleModules.map((module) => (
         <span
           key={module}
-          className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700"
+          className="inline-flex items-center rounded-full border border-blue-900 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700"
         >
           {module}
         </span>

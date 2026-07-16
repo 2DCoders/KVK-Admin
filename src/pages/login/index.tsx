@@ -110,7 +110,7 @@ export default function Login() {
               </div>
 
               <div className="mb-5 text-center">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.22em] text-blue-900">
                   Welcome back Admin !
                 </p>
                 <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
@@ -129,7 +129,7 @@ export default function Login() {
 
                   <div className="group relative">
                     <User size={17}
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-blue-600"
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-blue-900"
                     />
 
                     <input
@@ -160,7 +160,7 @@ export default function Login() {
 
                     {/* <button
                       type="button"
-                      className="cursor-pointer text-xs font-semibold text-blue-600 transition hover:text-blue-800"
+                      className="cursor-pointer text-xs font-semibold text-blue-900 transition hover:text-blue-800"
                     >
                       Forgot password?
                     </button> */}
@@ -169,7 +169,7 @@ export default function Login() {
                   <div className="group relative">
                     <LockKeyhole
                       size={17}
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-blue-600"
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-blue-900"
                     />
 
                     <input
@@ -193,7 +193,7 @@ export default function Login() {
                       aria-label={
                         showPassword ? "Hide password" : "Show password"
                       }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer rounded-lg p-1.5 text-slate-400 transition hover:bg-blue-50 hover:text-blue-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer rounded-lg p-1.5 text-slate-400 transition hover:bg-blue-50 hover:text-blue-900"
                     >
                       {showPassword ? (
                         <EyeOff size={17} />
@@ -248,7 +248,7 @@ export default function Login() {
 
               <h3 className="text-2xl font-bold text-slate-950 xl:text-3xl">
                 Manage Everything{" "}
-                <span className="text-blue-600">In One Place</span>
+                <span className="text-blue-900">In One Place</span>
               </h3>
 
               <p className="mx-auto mt-2 max-w-lg text-xs leading-5 text-slate-600 xl:text-sm">
@@ -326,7 +326,7 @@ type FeatureBubbleProps = {
 function FeatureBubble({ className, icon, label }: FeatureBubbleProps) {
   return (
     <div
-      className={`absolute flex h-14 w-14 items-center justify-center rounded-2xl border-4 border-white/70 bg-white text-blue-600 shadow-[0_12px_30px_rgba(37,99,235,0.22)] ${className}`}
+      className={`absolute flex h-14 w-14 items-center justify-center rounded-2xl border-4 border-white/70 bg-white text-blue-900 shadow-[0_12px_30px_rgba(37,99,235,0.22)] ${className}`}
       title={label}
     >
       {icon}

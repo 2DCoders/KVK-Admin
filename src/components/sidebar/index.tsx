@@ -226,7 +226,7 @@ const mainNavItems: NavItem[] = [
         {/* Brand Header */}
         <div className="border-b border-gray-100 px-4 pb-3 pt-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-900 text-white shadow-sm">
               <span className="text-xs font-bold">KVK</span>
             </div>
 
@@ -247,11 +247,11 @@ const mainNavItems: NavItem[] = [
           <div className="mb-4">
             <button
               onClick={() => !collapsed && setIsModulesOpen(!isModulesOpen)}
-              className={`w-full rounded-xl border transition-all duration-200 cursor-pointer
+              className={`w-full rounded-xl border-gray-200 transition-all duration-200 cursor-pointer
       ${
         isModuleActive
-          ? "border-blue-200 bg-blue-50"
-          : "border-gray-200 bg-white hover:border-blue-200 hover:bg-gray-50"
+          ? "bg-blue-50"
+          : "border-gray-200 bg-white hover:border-blue-900 hover:bg-gray-50"
       }
       ${collapsed ? "p-2 flex justify-center" : "px-4 py-3"}
     `}
@@ -262,7 +262,7 @@ const mainNavItems: NavItem[] = [
                     className={`flex h-10 w-10 items-center justify-center rounded-lg
           ${
             isModuleActive
-              ? "bg-blue-100 text-blue-600"
+              ? "bg-blue-100 text-blue-900"
               : "bg-gray-100 text-gray-600"
           }`}
                   >
@@ -320,15 +320,15 @@ const mainNavItems: NavItem[] = [
                       }}
                       className={`group flex cursor-pointer flex-col items-start gap-2 rounded-lg border p-3 text-left transition-all duration-150 ${
                         active
-                          ? "border-blue-300 bg-blue-600 text-white shadow-sm"
-                          : "border-gray-200 bg-white text-gray-700 hover:border-blue-200 hover:bg-blue-50"
+                          ? "border-blue-300 bg-blue-900 text-white shadow-sm"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-blue-900 hover:bg-blue-50"
                       }`}
                     >
                       <span
                         className={`flex h-8 w-8 items-center justify-center rounded-lg ${
                           active
                             ? "bg-white/15 text-white"
-                            : "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
+                            : "bg-blue-50 text-blue-900 group-hover:bg-blue-100"
                         }`}
                       >
                         <ModuleIcon size={16} />
@@ -348,7 +348,7 @@ const mainNavItems: NavItem[] = [
             )}
 
             {!collapsed && !isModulesOpen && isModuleActive && (
-              <p className="mt-1.5 px-2 text-[11px] font-medium text-blue-600">
+              <p className="mt-1.5 px-2 text-[11px] font-medium text-blue-900">
                 A module page is currently active
               </p>
             )}
@@ -378,7 +378,7 @@ const mainNavItems: NavItem[] = [
             } rounded-xl py-1.5 transition-colors duration-150`;
 
             const iconWrapper = `${
-              active ? "bg-blue-600 text-white" : "bg-transparent text-gray-400"
+              active ? "bg-blue-900 text-white" : "bg-transparent text-gray-400"
             } flex h-8 w-8 items-center justify-center rounded-lg transition`;
 
             return (

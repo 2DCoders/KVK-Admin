@@ -19,7 +19,7 @@ const variantStyles: Record<AlertVariant, { bg: string; ring: string; icon: Reac
   success: { bg: 'bg-emerald-50 border-emerald-100', ring: 'ring-emerald-200', icon: <CheckCircle className="w-5 h-5 text-emerald-600" /> },
   error: { bg: 'bg-red-50 border-red-100', ring: 'ring-red-200', icon: <XCircle className="w-5 h-5 text-red-600" /> },
   warning: { bg: 'bg-amber-50 border-amber-100', ring: 'ring-amber-200', icon: <AlertTriangle className="w-5 h-5 text-amber-600" /> },
-  info: { bg: 'bg-blue-50 border-blue-100', ring: 'ring-blue-200', icon: <CheckCircle className="w-5 h-5 text-blue-600" /> },
+  info: { bg: 'bg-blue-50 border-blue-100', ring: 'ring-blue-900', icon: <CheckCircle className="w-5 h-5 text-blue-900" /> },
 }
 
 export function Alert({
