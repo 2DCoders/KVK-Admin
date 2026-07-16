@@ -71,13 +71,6 @@ const gymNavItems: NavItem[] = [
     icon: Banknote,
     path: "/gym/payments",
     submenu: null,
-  },
-  {
-    id: "gym-staff",
-    label: "Staff",
-    icon: Users,
-    path: "/gym/staff",
-    submenu: null,
   }
 ];
 
@@ -94,6 +87,13 @@ const mainNavItems: NavItem[] = [
     label: "Memberships",
     icon: Calendar,
     path: "/main/memberships",
+    submenu: null,
+  },
+  {
+    id: "staff",
+    label: "Staff",
+    icon: Users,
+    path: "/main/staff",
     submenu: null,
   },
   {
