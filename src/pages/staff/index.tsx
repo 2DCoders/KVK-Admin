@@ -1,5 +1,5 @@
 import { Alert } from "@/components/ui/alert";
-import { getStaffMembers } from "@/services/staff-api";
+import { createStaffMember, getStaffMembers } from "@/services/staff-api";
 import {
   Check,
   Dumbbell,
@@ -109,6 +109,8 @@ const moduleOptions: {
 export default function Staff() {
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -161,6 +163,30 @@ export default function Staff() {
       );
     });
   }, [staffMembers, searchTerm]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredStaff.length / itemsPerPage),
+  );
+
+  const paginatedStaff = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredStaff.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredStaff, currentPage, itemsPerPage]);
+
+  const showingFrom =
+    filteredStaff.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+
+  const showingTo = Math.min(
+    currentPage * itemsPerPage,
+    filteredStaff.length,
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const validateForm = () => {
     const errors: FormErrors = {};
@@ -254,22 +280,10 @@ export default function Staff() {
         lastName: form.lastName.trim(),
         userName: form.userName.trim(),
         email: form.email.trim(),
+        password: form.firstName.trim(),
       };
 
-      /*
-       * Replace this mock section with your API:
-       *
-       * const response = await addStaffMember(body);
-       * await handleFetchStaff();
-       */
-
-      const newStaff: StaffMember = {
-        id: crypto.randomUUID(),
-        ...body,
-        assignedModules: [],
-      };
-
-      setStaffMembers((previous) => [newStaff, ...previous]);
+      await createStaffMember(body);
 
       setPageAlert({
         visible: true,
@@ -280,7 +294,6 @@ export default function Staff() {
 
       handleCloseAddModal();
     } catch (error) {
-      console.error("Failed to add staff member:", error);
 
       setPageAlert({
         visible: true,
@@ -291,6 +304,7 @@ export default function Staff() {
       });
     } finally {
       setIsSubmitting(false);
+      handleFetchStaff();
     }
   };
 
@@ -480,7 +494,10 @@ export default function Staff() {
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setCurrentPage(1);
+                }}
                 placeholder="Search name, username or email..."
                 className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
               />
@@ -519,14 +536,14 @@ export default function Staff() {
 
               <tbody className="divide-y divide-slate-100">
                 {filteredStaff.length > 0 ? (
-                  filteredStaff.map((staff) => (
+                  paginatedStaff.map((staff) => (
                     <tr
                       key={staff.id}
                       className="transition hover:bg-slate-50/80"
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-900 text-sm font-bold text-white shadow-sm">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-900 to-indigo-600 text-sm font-bold text-white shadow-sm">
                             {getInitials(staff.firstName, staff.lastName)}
                           </div>
 
@@ -589,7 +606,7 @@ export default function Staff() {
           {/* Mobile Cards */}
           <div className="divide-y divide-slate-100 md:hidden">
             {filteredStaff.length > 0 ? (
-              filteredStaff.map((staff) => (
+              paginatedStaff.map((staff) => (
                 <article key={staff.id} className="p-4">
                   <div className="mb-4 flex items-center gap-3">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-900 text-sm font-bold text-white">
@@ -633,6 +650,127 @@ export default function Staff() {
               <EmptyState />
             )}
           </div>
+
+          {/* Pagination Footer */}
+          {!isLoading && filteredStaff.length > 0 && (
+            <div className="flex flex-col gap-4 border-t border-slate-200 bg-slate-50/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                <p className="text-sm text-slate-500">
+                  Showing{" "}
+                  <span className="font-semibold text-slate-700">
+                    {showingFrom}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-semibold text-slate-700">
+                    {showingTo}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-slate-700">
+                    {filteredStaff.length}
+                  </span>{" "}
+                  staff members
+                </p>
+
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor="items-per-page"
+                    className="text-xs font-medium text-slate-500"
+                  >
+                    Rows:
+                  </label>
+
+                  <select
+                    id="items-per-page"
+                    value={itemsPerPage}
+                    onChange={(event) => {
+                      setItemsPerPage(Number(event.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="h-9 cursor-pointer rounded-lg border border-slate-200 bg-white px-2 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((previousPage) =>
+                      Math.max(previousPage - 1, 1),
+                    )
+                  }
+                  disabled={currentPage === 1}
+                  className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700"
+                >
+                  Previous
+                </button>
+
+                <div className="hidden items-center gap-1 sm:flex">
+                  {Array.from(
+                    { length: totalPages },
+                    (_, index) => index + 1,
+                  )
+                    .filter(
+                      (page) =>
+                        page === 1 ||
+                        page === totalPages ||
+                        Math.abs(page - currentPage) <= 1,
+                    )
+                    .map((page, index, visiblePages) => {
+                      const previousPage = visiblePages[index - 1];
+                      const showEllipsis =
+                        previousPage !== undefined &&
+                        page - previousPage > 1;
+
+                      return (
+                        <div key={page} className="flex items-center gap-1">
+                          {showEllipsis && (
+                            <span className="flex h-9 w-9 items-center justify-center text-sm text-slate-400">
+                              ...
+                            </span>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => setCurrentPage(page)}
+                            className={`flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-lg px-3 text-sm font-semibold transition ${
+                              currentPage === page
+                                ? "bg-blue-900 text-white shadow-sm"
+                                : "border border-slate-200 bg-white text-slate-700 hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                <span className="text-sm font-semibold text-slate-600 sm:hidden">
+                  {currentPage} / {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((previousPage) =>
+                      Math.min(previousPage + 1, totalPages),
+                    )
+                  }
+                  disabled={currentPage === totalPages}
+                  className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+
         </section>
       </div>
 
@@ -998,38 +1136,6 @@ function FormField({
 
       {error && (
         <p className="mt-1.5 text-xs font-medium text-red-600">{error}</p>
-      )}
-    </div>
-  );
-}
-
-function ModuleBadges({ modules }: { modules: StaffModule[] }) {
-  if (modules.length === 0) {
-    return (
-      <span className="text-xs font-medium text-slate-400">
-        No modules assigned
-      </span>
-    );
-  }
-
-  const visibleModules = modules.slice(0, 2);
-  const remainingCount = modules.length - visibleModules.length;
-
-  return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {visibleModules.map((module) => (
-        <span
-          key={module}
-          className="inline-flex items-center rounded-full border border-blue-900 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700"
-        >
-          {module}
-        </span>
-      ))}
-
-      {remainingCount > 0 && (
-        <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
-          +{remainingCount}
-        </span>
       )}
     </div>
   );

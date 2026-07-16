@@ -3,6 +3,7 @@ import { getEnv } from "@/env";
 
 const { API_URL } = getEnv();
 const STAFF_API_URL = `${API_URL}identity-m/auth/staff`;
+const STAFF_API_URL2 = `${API_URL}identity-m/staff`;
 
 const getToken = () => {
     const admin = localStorage.getItem("admin")
@@ -25,3 +26,18 @@ export const getStaffMembers = async () => {
         throw error;
     }
 }
+
+export const createStaffMember = async (staffData: any) => {
+    const token = getToken();
+    try {
+        const response = await axios.post(STAFF_API_URL + '/register', staffData, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+

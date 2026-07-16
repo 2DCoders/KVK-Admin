@@ -395,7 +395,7 @@ const mainNavItems: NavItem[] = [
                   title={collapsed ? item.label : undefined}
                   className={`${btnBase} ${
                     active && !collapsed
-                      ? "bg-blue-50 text-blue-700 shadow-sm"
+                      ? "bg-blue-50 text-blue-900 shadow-sm"
                       : "text-gray-700 hover:bg-gray-50"
                   }`}
                 >

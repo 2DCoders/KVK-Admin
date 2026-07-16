@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { FaWhatsapp } from "react-icons/fa";
 
@@ -42,6 +43,12 @@ type Member = {
 
 type StatusFilter = "all" | "1" | "2";
 
+type ActionMenuState = {
+  member: Member;
+  top: number;
+  left: number;
+} | null;
+
 export default function Memberships() {
   const [members, setMembers] = useState<Member[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -60,6 +67,57 @@ export default function Memberships() {
   const [isViewingMember, setIsViewingMember] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [actionMenu, setActionMenu] = useState<ActionMenuState>(null);
+
+  const handleToggleActionMenu = (
+    event: ReactMouseEvent<HTMLButtonElement>,
+    member: Member,
+  ) => {
+    event.stopPropagation();
+
+    if (actionMenu?.member.id === member.id) {
+      setActionMenu(null);
+      return;
+    }
+
+    const buttonRect = event.currentTarget.getBoundingClientRect();
+    const menuWidth = 208;
+    const menuHeight = 112;
+    const viewportPadding = 12;
+    const gap = 8;
+
+    let left = buttonRect.right - menuWidth;
+    left = Math.max(
+      viewportPadding,
+      Math.min(left, window.innerWidth - menuWidth - viewportPadding),
+    );
+
+    let top = buttonRect.bottom + gap;
+
+    if (top + menuHeight > window.innerHeight - viewportPadding) {
+      top = buttonRect.top - menuHeight - gap;
+    }
+
+    setActionMenu({ member, top, left });
+  };
+
+  const handleCloseActionMenu = () => {
+    setActionMenu(null);
+  };
+
+  useEffect(() => {
+    if (!actionMenu) return;
+
+    const closeMenu = () => setActionMenu(null);
+
+    window.addEventListener("resize", closeMenu);
+    window.addEventListener("scroll", closeMenu, true);
+
+    return () => {
+      window.removeEventListener("resize", closeMenu);
+      window.removeEventListener("scroll", closeMenu, true);
+    };
+  }, [actionMenu]);
 
   const handleOpenApproveModal = (member: Member) => {
     setSelectedMember(member);
@@ -244,10 +302,10 @@ export default function Memberships() {
   const showingTo = Math.min(endIndex, filteredMembers.length);
 
   useEffect(() => {
-  if (currentPage > totalPages) {
-    setCurrentPage(totalPages);
-  }
-}, [currentPage, totalPages]);
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -452,7 +510,7 @@ export default function Memberships() {
                                 className="h-11 w-11 rounded-xl object-cover ring-1 ring-slate-200"
                               />
                             ) : (
-                              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-sm font-bold text-white shadow-sm">
+                              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-900 to-indigo-600 text-sm font-bold text-white shadow-sm">
                                 {getInitials(member.firstName, member.lastName)}
                               </div>
                             )}
@@ -502,50 +560,21 @@ export default function Memberships() {
                         </td>
 
                         <td className="px-5 py-4">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-end">
                             <button
                               type="button"
-                              onClick={() => handleWhatsApp(member)}
-                              className="inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-lg bg-green-500 text-white transition hover:bg-green-600"
-                              title="Send WhatsApp"
+                              onClick={(event) =>
+                                handleToggleActionMenu(event, member)
+                              }
+                              className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700"
+                              aria-label={`Open actions for ${member.firstName} ${member.lastName}`}
+                              aria-expanded={
+                                actionMenu?.member.id === member.id
+                              }
+                              aria-haspopup="menu"
                             >
-                              <FaWhatsapp size={18} />
+                              <MoreHorizontal size={18} />
                             </button>
-
-                            {isPending ? (
-                              <button
-                                type="button"
-                                onClick={() => handleOpenApproveModal(member)}
-                                disabled={isApproving}
-                                className="inline-flex cursor-pointer h-9 items-center gap-1.5 rounded-lg bg-blue-900 px-3.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
-                              >
-                                {isApproving ? (
-                                  <>
-                                    <RefreshCcw
-                                      size={15}
-                                      className="animate-spin"
-                                    />
-                                    Approving
-                                  </>
-                                ) : (
-                                  <>
-                                    <Check size={15} />
-                                    Approve
-                                  </>
-                                )}
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  handleViewMember(member);
-                                }}
-                                className="inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-lg bg-gray-500 text-white transition hover:bg-gray-600"
-                                title="View Member"
-                              >
-                                <EyeIcon size={18} />
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -625,31 +654,16 @@ export default function Memberships() {
                       </div>
                     </div>
 
-                    {isPending ? (
-                      <button
-                        type="button"
-                        onClick={() => handleOpenApproveModal(member)}
-                        disabled={isApproving}
-                        className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-900 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isApproving ? (
-                          <>
-                            <RefreshCcw size={16} className="animate-spin" />
-                            Approving member
-                          </>
-                        ) : (
-                          <>
-                            <Check size={16} />
-                            Approve member
-                          </>
-                        )}
-                      </button>
-                    ) : (
-                      <div className="flex h-10 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 text-sm font-semibold text-emerald-700">
-                        <CheckCircle2 size={16} />
-                        Membership approved
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      onClick={(event) => handleToggleActionMenu(event, member)}
+                      className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700"
+                      aria-expanded={actionMenu?.member.id === member.id}
+                      aria-haspopup="menu"
+                    >
+                      <MoreHorizontal size={18} />
+                      Actions
+                    </button>
                   </article>
                 );
               })
@@ -659,123 +673,201 @@ export default function Memberships() {
           </div>
 
           {/* Pagination Footer */}
-{!isLoading && filteredMembers.length > 0 && (
-  <div className="flex flex-col gap-4 border-t border-slate-200 bg-slate-50/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-      <p className="text-sm text-slate-500">
-        Showing{" "}
-        <span className="font-semibold text-slate-700">
-          {showingFrom}
-        </span>{" "}
-        to{" "}
-        <span className="font-semibold text-slate-700">
-          {showingTo}
-        </span>{" "}
-        of{" "}
-        <span className="font-semibold text-slate-700">
-          {filteredMembers.length}
-        </span>{" "}
-        members
-      </p>
+          {!isLoading && filteredMembers.length > 0 && (
+            <div className="flex flex-col gap-4 border-t border-slate-200 bg-slate-50/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                <p className="text-sm text-slate-500">
+                  Showing{" "}
+                  <span className="font-semibold text-slate-700">
+                    {showingFrom}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-semibold text-slate-700">
+                    {showingTo}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-slate-700">
+                    {filteredMembers.length}
+                  </span>{" "}
+                  members
+                </p>
 
-      <div className="flex items-center gap-2">
-        <label
-          htmlFor="items-per-page"
-          className="text-xs font-medium text-slate-500"
-        >
-          Rows:
-        </label>
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor="items-per-page"
+                    className="text-xs font-medium text-slate-500"
+                  >
+                    Rows:
+                  </label>
 
-        <select
-          id="items-per-page"
-          value={itemsPerPage}
-          onChange={(event) => {
-            setItemsPerPage(Number(event.target.value));
-            setCurrentPage(1);
-          }}
-          className="h-9 cursor-pointer rounded-lg border border-slate-200 bg-white px-2 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        >
-          <option value={5}>5</option>
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-          <option value={50}>50</option>
-        </select>
-      </div>
-    </div>
+                  <select
+                    id="items-per-page"
+                    value={itemsPerPage}
+                    onChange={(event) => {
+                      setItemsPerPage(Number(event.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="h-9 cursor-pointer rounded-lg border border-slate-200 bg-white px-2 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+              </div>
 
-    <div className="flex items-center justify-between gap-2 sm:justify-end">
-      <button
-        type="button"
-        onClick={() =>
-          setCurrentPage((previousPage) =>
-            Math.max(previousPage - 1, 1),
-          )
-        }
-        disabled={currentPage === 1}
-        className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700"
-      >
-        Previous
-      </button>
+              <div className="flex items-center justify-between gap-2 sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((previousPage) =>
+                      Math.max(previousPage - 1, 1),
+                    )
+                  }
+                  disabled={currentPage === 1}
+                  className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700"
+                >
+                  Previous
+                </button>
 
-      <div className="hidden items-center gap-1 sm:flex">
-        {Array.from({ length: totalPages }, (_, index) => index + 1)
-          .filter((page) => {
-            return (
-              page === 1 ||
-              page === totalPages ||
-              Math.abs(page - currentPage) <= 1
-            );
-          })
-          .map((page, index, visiblePages) => {
-            const previousPage = visiblePages[index - 1];
-            const showEllipsis =
-              previousPage !== undefined && page - previousPage > 1;
+                <div className="hidden items-center gap-1 sm:flex">
+                  {Array.from({ length: totalPages }, (_, index) => index + 1)
+                    .filter((page) => {
+                      return (
+                        page === 1 ||
+                        page === totalPages ||
+                        Math.abs(page - currentPage) <= 1
+                      );
+                    })
+                    .map((page, index, visiblePages) => {
+                      const previousPage = visiblePages[index - 1];
+                      const showEllipsis =
+                        previousPage !== undefined && page - previousPage > 1;
 
-            return (
-              <div key={page} className="flex items-center gap-1">
-                {showEllipsis && (
-                  <span className="flex h-9 w-9 items-center justify-center text-sm text-slate-400">
-                    ...
-                  </span>
-                )}
+                      return (
+                        <div key={page} className="flex items-center gap-1">
+                          {showEllipsis && (
+                            <span className="flex h-9 w-9 items-center justify-center text-sm text-slate-400">
+                              ...
+                            </span>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => setCurrentPage(page)}
+                            className={`flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-lg px-3 text-sm font-semibold transition ${
+                              currentPage === page
+                                ? "bg-blue-900 text-white shadow-sm"
+                                : "border border-slate-200 bg-white text-slate-700 hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                <span className="text-sm font-semibold text-slate-600 sm:hidden">
+                  {currentPage} / {totalPages}
+                </span>
 
                 <button
                   type="button"
-                  onClick={() => setCurrentPage(page)}
-                  className={`flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-lg px-3 text-sm font-semibold transition ${
-                    currentPage === page
-                      ? "bg-blue-900 text-white shadow-sm"
-                      : "border border-slate-200 bg-white text-slate-700 hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700"
-                  }`}
+                  onClick={() =>
+                    setCurrentPage((previousPage) =>
+                      Math.min(previousPage + 1, totalPages),
+                    )
+                  }
+                  disabled={currentPage === totalPages}
+                  className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700"
                 >
-                  {page}
+                  Next
                 </button>
               </div>
-            );
-          })}
-      </div>
-
-      <span className="text-sm font-semibold text-slate-600 sm:hidden">
-        {currentPage} / {totalPages}
-      </span>
-
-      <button
-        type="button"
-        onClick={() =>
-          setCurrentPage((previousPage) =>
-            Math.min(previousPage + 1, totalPages),
-          )
-        }
-        disabled={currentPage === totalPages}
-        className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700"
-      >
-        Next
-      </button>
-    </div>
-  </div>
-)}
+            </div>
+          )}
         </section>
       </div>
+      {actionMenu &&
+        createPortal(
+          <>
+            <button
+              type="button"
+              aria-label="Close action menu"
+              className="fixed inset-0 z-[9998] cursor-default bg-transparent"
+              onClick={handleCloseActionMenu}
+            />
+
+            <div
+              role="menu"
+              aria-label={`Actions for ${actionMenu.member.firstName} ${actionMenu.member.lastName}`}
+              className="fixed z-[9999] w-52 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl shadow-slate-900/15"
+              style={{
+                top: actionMenu.top,
+                left: actionMenu.left,
+              }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  handleWhatsApp(actionMenu.member);
+                  handleCloseActionMenu();
+                }}
+                className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                  <FaWhatsapp size={17} />
+                </span>
+                Send WhatsApp
+              </button>
+
+              {String(actionMenu.member.membershipStatus) === "2" ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    handleOpenApproveModal(actionMenu.member);
+                    handleCloseActionMenu();
+                  }}
+                  disabled={approvingId === actionMenu.member.id}
+                  className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                    {approvingId === actionMenu.member.id ? (
+                      <RefreshCcw size={17} className="animate-spin" />
+                    ) : (
+                      <Check size={17} />
+                    )}
+                  </span>
+                  {approvingId === actionMenu.member.id
+                    ? "Approving"
+                    : "Approve"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    handleViewMember(actionMenu.member);
+                    handleCloseActionMenu();
+                  }}
+                  className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                    <EyeIcon size={17} />
+                  </span>
+                  View member
+                </button>
+              )}
+            </div>
+          </>,
+          document.body,
+        )}
+
       {selectedMember && (
         <MemberApprovalModal
           member={selectedMember}
@@ -899,7 +991,7 @@ function MemberApprovalModal({
                   className="h-14 w-14 shrink-0 rounded-2xl object-cover ring-2 ring-white"
                 />
               ) : (
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-lg font-bold text-white shadow-sm">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-900 to-indigo-900 text-lg font-bold text-white shadow-sm">
                   {getInitials(member.firstName, member.lastName)}
                 </div>
               )}
