@@ -41,3 +41,16 @@ export const createStaffMember = async (staffData: any) => {
     }
 }
 
+export const assignModules = async (staffId: string, body: any) => {
+    const token = getToken();
+    try {
+        const response = await axios.post(`${STAFF_API_URL2}/${staffId}/modules/assign`, body, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};

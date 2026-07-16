@@ -1,5 +1,5 @@
 import { Alert } from "@/components/ui/alert";
-import { createStaffMember, getStaffMembers } from "@/services/staff-api";
+import { assignModules, createStaffMember, getStaffMembers } from "@/services/staff-api";
 import {
   Check,
   Dumbbell,
@@ -339,38 +339,20 @@ export default function Staff() {
       setIsSubmitting(true);
 
       const body = {
-        staffId: selectedStaff.id,
-        modules: selectedModules,
+        moduleNames: selectedModules,
       };
 
-      /*
-       * Replace this mock section with your API:
-       *
-       * await assignStaffModules(body);
-       * await handleFetchStaff();
-       */
-
-      setStaffMembers((previous) =>
-        previous.map((staff) =>
-          staff.id === selectedStaff.id
-            ? {
-                ...staff,
-                assignedModules: body.modules,
-              }
-            : staff,
-        ),
-      );
+      await assignModules(selectedStaff.id, body);
 
       setPageAlert({
         visible: true,
         variant: "success",
-        title: "Modules assigned",
+        title: "Modules updated",
         description: `Module access for ${selectedStaff.firstName} ${selectedStaff.lastName} has been updated.`,
       });
 
       handleCloseModuleModal();
     } catch (error) {
-      console.error("Failed to assign modules:", error);
 
       setPageAlert({
         visible: true,
@@ -381,6 +363,7 @@ export default function Staff() {
       });
     } finally {
       setIsSubmitting(false);
+      handleFetchStaff();
     }
   };
 
