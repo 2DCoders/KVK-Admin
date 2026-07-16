@@ -12,6 +12,8 @@ import {
   Coffee,
   ShoppingBag,
   Globe,
+  Banknote,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -64,19 +66,19 @@ const gymNavItems: NavItem[] = [
     submenu: null,
   },
   {
-    id: "gym-members",
-    label: "Members",
-    icon: Calendar,
-    path: "/gym/members",
+    id: "gym-payments",
+    label: "Payments",
+    icon: Banknote,
+    path: "/gym/payments",
     submenu: null,
   },
   {
-    id: "gym-settings",
-    label: "Settings",
-    icon: Settings,
-    path: "/gym/settings",
+    id: "gym-staff",
+    label: "Staff",
+    icon: Users,
+    path: "/gym/staff",
     submenu: null,
-  },
+  }
 ];
 
 const mainNavItems: NavItem[] = [
@@ -108,13 +110,13 @@ const mainNavItems: NavItem[] = [
       id: "main",
       label: "MAIN",
       icon: Globe,
-      path: "/main/dashboard",
+      path: "/main",
     },
     {
       id: "gym",
       label: "GYM",
       icon: Dumbbell,
-      path: "/gym/dashboard",
+      path: "/gym",
     },
     {
       id: "car-wash",
@@ -300,40 +302,55 @@ const mainNavItems: NavItem[] = [
             </button>
 
             {!collapsed && isModulesOpen && (
-              <div className="mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2">
                 {modules.map((module) => {
-                  const Icon = module.icon;
+                  const ModuleIcon = module.icon;
 
                   const active =
                     location.pathname === module.path ||
-                    location.pathname.startsWith(module.path + "/");
+                    location.pathname.startsWith(`${module.path}/`);
 
                   return (
                     <button
+                      type="button"
                       key={module.id}
                       onClick={() => {
                         handleNavigation(module.path)
                         setIsModulesOpen(false)
                       }}
-                      className={`flex w-full items-center gap-3 px-4 py-3 text-left transition cursor-pointer
-              ${
-                active
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
+                      className={`group flex cursor-pointer flex-col items-start gap-2 rounded-lg border p-3 text-left transition-all duration-150 ${
+                        active
+                          ? "border-blue-300 bg-blue-600 text-white shadow-sm"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-blue-200 hover:bg-blue-50"
+                      }`}
                     >
-                      <Icon
-                        size={17}
-                        className={active ? "text-blue-600" : "text-gray-500"}
-                      />
+                      <span
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                          active
+                            ? "bg-white/15 text-white"
+                            : "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
+                        }`}
+                      >
+                        <ModuleIcon size={16} />
+                      </span>
 
-                      <span className="text-sm font-medium">
+                      <span
+                        className={`text-[11px] font-semibold tracking-wide ${
+                          active ? "text-white" : "text-gray-700"
+                        }`}
+                      >
                         {module.label}
                       </span>
                     </button>
                   );
                 })}
               </div>
+            )}
+
+            {!collapsed && !isModulesOpen && isModuleActive && (
+              <p className="mt-1.5 px-2 text-[11px] font-medium text-blue-600">
+                A module page is currently active
+              </p>
             )}
           </div>
 
