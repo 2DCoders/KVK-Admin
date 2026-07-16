@@ -14,7 +14,11 @@ function App() {
       <Route element={<AdminLayout><Dashboard /></AdminLayout>} path="/main/dashboard" />
       <Route element={<AdminLayout><SettingsPage /></AdminLayout>} path="/main/settings" />
       <Route element={<AdminLayout><Memberships /></AdminLayout>} path="/main/memberships" />
-      
+
+      <Route element={<AdminLayout><Dashboard /></AdminLayout>} path="/gym/dashboard" />
+      <Route element={<AdminLayout><Dashboard /></AdminLayout>} path="/gym/members" />
+      <Route element={<AdminLayout><SettingsPage /></AdminLayout>} path="/gym/settings" />
+
       {/* Redirect to dashboard */}
       <Route path="*" element={<Navigate to="/main/dashboard" />} />
     </Routes>

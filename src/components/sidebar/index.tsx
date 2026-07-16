@@ -55,42 +55,66 @@ export default function Sidebar({ isOpen, isMobile, onClose }: SidebarProps) {
     ? JSON.parse(localStorage.getItem("admin") as string)
     : null;
 
-  const navItems: NavItem[] = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: Gauge,
-      path: "/main/dashboard",
-      submenu: null,
-    },
-    {
-      id: "memberships",
-      label: "Memberships",
-      icon: Calendar,
-      path: "/main/memberships",
-      submenu: null,
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: Settings,
-      path: "/main/settings",
-      submenu: null,
-    },
-  ];
+const gymNavItems: NavItem[] = [
+  {
+    id: "gym-dashboard",
+    label: "Dashboard",
+    icon: Gauge,
+    path: "/gym/dashboard",
+    submenu: null,
+  },
+  {
+    id: "gym-members",
+    label: "Members",
+    icon: Calendar,
+    path: "/gym/members",
+    submenu: null,
+  },
+  {
+    id: "gym-settings",
+    label: "Settings",
+    icon: Settings,
+    path: "/gym/settings",
+    submenu: null,
+  },
+];
+
+const mainNavItems: NavItem[] = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: Gauge,
+    path: "/main/dashboard",
+    submenu: null,
+  },
+  {
+    id: "memberships",
+    label: "Memberships",
+    icon: Calendar,
+    path: "/main/memberships",
+    submenu: null,
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
+    path: "/main/settings",
+    submenu: null,
+  },
+];
 
   const modules: ModuleItem[] = [
     {
       id: "main",
       label: "MAIN",
       icon: Globe,
-      path: "/main",
+      path: "/main/dashboard",
     },
     {
       id: "gym",
       label: "GYM",
       icon: Dumbbell,
-      path: "/gym",
+      path: "/gym/dashboard",
     },
     {
       id: "car-wash",
@@ -158,6 +182,35 @@ export default function Sidebar({ isOpen, isMobile, onClose }: SidebarProps) {
         location.pathname === module.path ||
         location.pathname.startsWith(`${module.path}/`),
     ) ?? null;
+
+    const currentNavItems: NavItem[] = (() => {
+  switch (selectedModule?.id) {
+    case "gym":
+      return gymNavItems;
+
+    case "main":
+      return mainNavItems;
+
+    // Future modules
+    case "badminton":
+      // return badmintonNavItems;
+
+    case "gaming":
+      // return gamingNavItems;
+
+    case "car-wash":
+      // return carWashNavItems;
+
+    case "cafe":
+      // return cafeNavItems;
+
+    case "retail":
+      // return retailNavItems;
+
+    default:
+      return mainNavItems;
+  }
+})();
 
   return (
     <aside
@@ -258,7 +311,10 @@ export default function Sidebar({ isOpen, isMobile, onClose }: SidebarProps) {
                   return (
                     <button
                       key={module.id}
-                      onClick={() => handleNavigation(module.path)}
+                      onClick={() => {
+                        handleNavigation(module.path)
+                        setIsModulesOpen(false)
+                      }}
                       className={`flex w-full items-center gap-3 px-4 py-3 text-left transition cursor-pointer
               ${
                 active
@@ -285,13 +341,13 @@ export default function Sidebar({ isOpen, isMobile, onClose }: SidebarProps) {
           {!collapsed && (
             <div className="mb-2 flex items-center gap-2 px-2">
               <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400">
-                Main Menu
+                {selectedModule?.label || "Main"} Menu
               </span>
               <div className="h-px flex-1 bg-gray-200" />
             </div>
           )}
 
-          {navItems.map((item) => {
+          {currentNavItems.map((item) => {
             const Icon = item.icon;
 
             const active = item.submenu
