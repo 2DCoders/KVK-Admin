@@ -493,8 +493,6 @@ export default function Memberships() {
                   <TableLoadingRows />
                 ) : paginatedMembers.length > 0 ? (
                   paginatedMembers.map((member) => {
-                    const isPending = String(member.membershipStatus) === "2";
-                    const isApproving = approvingId === member.id;
 
                     return (
                       <tr
@@ -597,8 +595,6 @@ export default function Memberships() {
               <MobileLoadingCards />
             ) : paginatedMembers.length > 0 ? (
               paginatedMembers.map((member) => {
-                const isPending = String(member.membershipStatus) === "2";
-                const isApproving = approvingId === member.id;
 
                 return (
                   <article key={member.id} className="p-4">

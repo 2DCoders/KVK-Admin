@@ -1,16 +1,10 @@
 import { useEffect, useState } from "react";
 import {
-  Banknote,
-  CreditCard,
   Download,
-  ReceiptText,
   Search,
-  TrendingUp,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { getFinancialSummary } from "@/services/financial-api";
 import { getPayments } from "@/services/payments-api";
 
 export default function GymPayments() {
