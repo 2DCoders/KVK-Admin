@@ -7,6 +7,7 @@ import {
   ChevronDown,
   CreditCard,
   EyeIcon,
+  Gift,
   Mail,
   MoreHorizontal,
   Phone,
@@ -22,6 +23,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { FaWhatsapp } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 type Member = {
   id: string;
@@ -68,6 +70,8 @@ export default function Memberships() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [actionMenu, setActionMenu] = useState<ActionMenuState>(null);
+
+  const navigate = useNavigate();
 
   const handleToggleActionMenu = (
     event: ReactMouseEvent<HTMLButtonElement>,
@@ -319,9 +323,8 @@ export default function Memberships() {
   ).length;
 
   const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName?.charAt(0) ?? ""}${
-      lastName?.charAt(0) ?? ""
-    }`.toUpperCase();
+    return `${firstName?.charAt(0) ?? ""}${lastName?.charAt(0) ?? ""
+      }`.toUpperCase();
   };
 
   const getStatusBadge = (status: string | number) => {
@@ -387,15 +390,29 @@ export default function Memberships() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleFetchMembers}
-            disabled={isLoading}
-            className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <RefreshCcw size={16} className={isLoading ? "animate-spin" : ""} />
-            Refresh
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={() => navigate("/main/memberships/coupons")}
+              className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
+            >
+              <Gift size={17} />
+              Generate Coupons
+            </button>
+
+            <button
+              type="button"
+              onClick={handleFetchMembers}
+              disabled={isLoading}
+              className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCcw
+                size={16}
+                className={isLoading ? "animate-spin" : ""}
+              />
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* Summary Cards */}
@@ -752,11 +769,10 @@ export default function Memberships() {
                           <button
                             type="button"
                             onClick={() => setCurrentPage(page)}
-                            className={`flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-lg px-3 text-sm font-semibold transition ${
-                              currentPage === page
+                            className={`flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-lg px-3 text-sm font-semibold transition ${currentPage === page
                                 ? "bg-blue-900 text-white shadow-sm"
                                 : "border border-slate-200 bg-white text-slate-700 hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700"
-                            }`}
+                              }`}
                           >
                             {page}
                           </button>
@@ -1115,11 +1131,10 @@ function MemberApprovalModal({
 
           {!viewOnly && (
             <label
-              className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${
-                confirmed
+              className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${confirmed
                   ? "border-blue-300 bg-blue-50"
                   : "border-slate-200 bg-slate-50 hover:border-blue-900"
-              }`}
+                }`}
             >
               <input
                 type="checkbox"
