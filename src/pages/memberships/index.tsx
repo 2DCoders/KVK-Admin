@@ -1,4 +1,6 @@
 import { Alert } from "@/components/ui/alert";
+import { getEnv } from "@/env";
+import { generateCouponCodes } from "@/services/auth-api";
 import { getMembers, pay } from "@/services/members-api";
 import {
   CalendarDays,
@@ -71,6 +73,9 @@ export default function Memberships() {
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [actionMenu, setActionMenu] = useState<ActionMenuState>(null);
 
+  const env = getEnv();
+  const COUPON_CODE_ID = env.COUPON_CODE_ID;
+
   const navigate = useNavigate();
 
   const handleToggleActionMenu = (
@@ -104,6 +109,37 @@ export default function Memberships() {
 
     setActionMenu({ member, top, left });
   };
+
+  const handleGenerateCoupons = async() => {
+
+    const formData = new FormData();
+    formData.append("offerRateId", COUPON_CODE_ID);
+
+    setLoading(true);
+
+    try{
+      await generateCouponCodes(formData);
+      setPageAlert({
+        visible: true,
+        variant: "success",
+        title: "Coupons generated",
+        description: "The coupon codes have been generated successfully.",
+      });
+
+      setTimeout(() => {
+        navigate("/main/memberships/coupons");
+      }, 1000);
+    } catch (error) {
+      setPageAlert({
+        visible: true,
+        variant: "error",
+        title: "Coupon generation failed",
+        description: "An error occurred while generating coupon codes. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleCloseActionMenu = () => {
     setActionMenu(null);
@@ -393,7 +429,7 @@ export default function Memberships() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <button
               type="button"
-              onClick={() => navigate("/main/memberships/coupons")}
+              onClick={() => handleGenerateCoupons()}
               className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
             >
               <Gift size={17} />
