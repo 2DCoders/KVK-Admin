@@ -1,3 +1,4 @@
+import Alert from "@/components/ui/alert";
 import { getCouponCodes } from "@/services/auth-api";
 import { sendBulkSms, sendSingleSms } from "@/services/members-api";
 import {
@@ -131,31 +132,6 @@ function formatRedeemedDate(
   });
 }
 
-/**
- * Creates the coupon SMS message.
- */
-function createCouponSmsMessage(
-  coupon: Coupon,
-): string {
-  const memberName =
-    coupon.userName?.trim() || "Member";
-
-  const couponCode =
-    coupon.couponCode?.trim() || "";
-
-  const offerName =
-    coupon.offerName?.trim() || "Member discount";
-
-  return (
-    `Hello ${memberName}, ` +
-    `Thank you for being a valued KVK Arena member! ` +
-    `Your exclusive member coupon is ${couponCode}. ` +
-    `Offer: ${offerName}. ` +
-    `You can use this coupon to receive your KVK Arena member discount. ` +
-    `Thank you, KVK Arena Team.`
-  );
-}
-
 /* ============================================================= PAGE ============================================================= */
 
 export default function MembershipCoupons() {
@@ -195,6 +171,14 @@ export default function MembershipCoupons() {
 
   const [smsSendingId, setSmsSendingId] =
     useState<string | null>(null);
+
+  const [pageAlert, setPageAlert] = useState<{
+    visible: boolean;
+    variant?: "success" | "error" | "warning" | "info";
+    title?: string;
+    description?: string;
+  }>({ visible: false });
+  const [loading, setLoading] = useState(false);
 
   /* =========================================================== FETCH COUPONS =========================================================== */
 
@@ -356,10 +340,11 @@ export default function MembershipCoupons() {
           );
         }, 2000);
 
-        setAlert({
-          type: "success",
-          message:
-            "Coupon code copied successfully.",
+        setPageAlert({
+          visible: true,
+          variant: "success",
+          title: "Coupon Code Copied",
+          description: "Coupon code copied successfully.",
         });
       } catch (error) {
         console.error(
@@ -367,10 +352,11 @@ export default function MembershipCoupons() {
           error,
         );
 
-        setAlert({
-          type: "error",
-          message:
-            "Unable to copy the coupon code.",
+        setPageAlert({
+          visible: true,
+          variant: "error",
+          title: "Failed to Copy Coupon",
+          description: "Unable to copy the coupon code.",
         });
       }
     },
@@ -382,10 +368,11 @@ export default function MembershipCoupons() {
   const handleWhatsApp = useCallback(
     (coupon: Coupon) => {
       if (!coupon.phoneNumber) {
-        setAlert({
-          type: "error",
-          message:
-            "Phone number is not available.",
+        setPageAlert({
+          visible: true,
+          variant: "error",
+          title: "Phone Number Unavailable",
+          description: "Phone number is not available.",
         });
 
         return;
@@ -397,10 +384,11 @@ export default function MembershipCoupons() {
         );
 
       if (!phone) {
-        setAlert({
-          type: "error",
-          message:
-            "The member phone number is invalid.",
+        setPageAlert({
+          visible: true,
+          variant: "error",
+          title: "Invalid Phone Number",
+          description: "The member phone number is invalid.",
         });
 
         return;
@@ -461,10 +449,11 @@ export default function MembershipCoupons() {
   const handleSendSingleSms = useCallback(
     async (coupon: Coupon) => {
       if (!coupon.phoneNumber) {
-        setAlert({
-          type: "error",
-          message:
-            "Phone number is not available.",
+        setPageAlert({
+          visible: true,
+          variant: "error",
+          title: "Phone Number Unavailable",
+          description: "Phone number is not available.",
         });
 
         return;
@@ -476,14 +465,17 @@ export default function MembershipCoupons() {
         );
 
       if (!phone) {
-        setAlert({
-          type: "error",
-          message:
-            "The member phone number is invalid.",
+        setPageAlert({
+          visible: true,
+          variant: "error",
+          title: "Invalid Phone Number",
+          description: "The member phone number is invalid.",
         });
 
         return;
       }
+
+      setLoading(true);
 
       try {
         setIsSendingSms(true);
@@ -493,24 +485,25 @@ export default function MembershipCoupons() {
         formData.append("memberId", coupon.memberId);
         await sendSingleSms(formData);
 
-        setAlert({
-          type: "success",
-          message: `SMS sent successfully to ${coupon.userName || "the member"}.`,
+        setPageAlert({
+          visible: true,
+          variant: "success",
+          title: "SMS Sent",
+          description: `SMS has been sent successfully to ${coupon.userName || "the member"}.`,
         });
       } catch (error) {
-        console.error(
-          "Failed to send SMS:",
-          error,
-        );
 
-        setAlert({
-          type: "error",
-          message: `Unable to send SMS to ${coupon.userName || "the member"}.`,
+        setPageAlert({
+          visible: true,
+          variant: "error",
+          title: "Failed to Send SMS",
+          description: `Unable to send SMS to ${coupon.userName || "the member"}.`,
         });
       } finally {
         setIsSendingSms(false);
         setSmsSendingId(null);
         setSmsConfirmation(null);
+        setLoading(false);
       }
     },
     [],
@@ -518,81 +511,50 @@ export default function MembershipCoupons() {
 
   /* =========================================================== SEND SMS TO ALL =========================================================== */
 
-  const handleSendSmsToAll = useCallback(
-    async () => {
-      if (smsEligibleCoupons.length === 0) {
-        setAlert({
-          type: "error",
-          message:
-            "There are no eligible members with valid phone numbers.",
-        });
+  const handleSendSmsToAll = useCallback(async () => {
+    if (smsEligibleCoupons.length === 0) {
+      setPageAlert({
+        visible: true,
+        variant: "error",
+        title: "No Eligible Members",
+        description: "There are no eligible members with valid phone numbers.",
+      });
 
-        setSmsConfirmation(null);
+      setSmsConfirmation(null);
+      return;
+    }
 
-        return;
-      }
+    setLoading(true);
 
-      try {
-        setIsSendingSms(true);
+    try {
+      setIsSendingSms(true);
 
-        let successCount = 0;
-        let failedCount = 0;
+      await sendBulkSms();
 
-        for (const coupon of smsEligibleCoupons) {
-          try {
-            const phone =
-              normalizeSriLankanPhone(
-                coupon.phoneNumber!,
-              );
+      setPageAlert({
+        visible: true,
+        variant: "success",
+        title: "SMS Sent",
+        description: "SMS sending request has been sent successfully.",
+      });
+    } catch (error) {
+      console.error(
+        "Bulk SMS failed:",
+        error,
+      );
 
-            if (!phone) {
-              failedCount++;
-              continue;
-            }
-
-            await sendBulkSms();
-
-            successCount++;
-          } catch (error) {
-            console.error(
-              `Failed to send SMS to ${coupon.userName}:`,
-              error,
-            );
-
-            failedCount++;
-          }
-        }
-
-        if (failedCount === 0) {
-          setAlert({
-            type: "success",
-            message: `SMS sent successfully to all ${successCount} eligible members.`,
-          });
-        } else {
-          setAlert({
-            type: "success",
-            message: `SMS completed. ${successCount} sent successfully and ${failedCount} failed.`,
-          });
-        }
-      } catch (error) {
-        console.error(
-          "Bulk SMS failed:",
-          error,
-        );
-
-        setAlert({
-          type: "error",
-          message:
-            "Unable to complete the SMS sending process.",
-        });
-      } finally {
-        setIsSendingSms(false);
-        setSmsConfirmation(null);
-      }
-    },
-    [smsEligibleCoupons],
-  );
-
+      setPageAlert({
+        visible: true,
+        variant: "error",
+        title: "Failed to Send SMS",
+        description: "Unable to send SMS to all members.",
+      });
+    } finally {
+      setIsSendingSms(false);
+      setSmsConfirmation(null);
+      setLoading(false);
+    }
+  }, [smsEligibleCoupons.length]);
   /* =========================================================== SMS CONFIRMATION =========================================================== */
 
   const openSingleSmsConfirmation =
@@ -606,10 +568,11 @@ export default function MembershipCoupons() {
   const openAllSmsConfirmation =
     useCallback(() => {
       if (smsEligibleCoupons.length === 0) {
-        setAlert({
-          type: "error",
-          message:
-            "There are no eligible members with valid phone numbers.",
+        setPageAlert({
+          visible: true,
+          variant: "error",
+          title: "No Eligible Members",
+          description: "There are no eligible members with valid phone numbers.",
         });
 
         return;
@@ -682,6 +645,29 @@ export default function MembershipCoupons() {
 
   return (
     <main className="min-h-screen bg-slate-50">
+
+      {pageAlert.visible && (
+              <div>
+                <Alert
+                  variant={pageAlert.variant as any}
+                  title={pageAlert.title}
+                  description={pageAlert.description}
+                  onClose={() => setPageAlert((s) => ({ ...s, visible: false }))}
+                />
+              </div>
+            )}
+      
+            {loading &&
+              createPortal(
+                <div className="fixed inset-0 z-[9999999999] flex items-center justify-center bg-black/60 backdrop-blur-md">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="h-14 w-14 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
+                    <p className="text-sm text-white font-medium">Loading</p>
+                  </div>
+                </div>,
+                document.body,
+              )}
+              
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 
         {/* ===================================================== ALERT ===================================================== */}
@@ -689,11 +675,10 @@ export default function MembershipCoupons() {
         {alert && (
           <div
             role="alert"
-            className={`mb-4 rounded-xl border px-4 py-3 text-sm font-medium ${
-              alert.type === "success"
+            className={`mb-4 rounded-xl border px-4 py-3 text-sm font-medium ${alert.type === "success"
                 ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                 : "border-red-200 bg-red-50 text-red-800"
-            }`}
+              }`}
           >
             {alert.message}
           </div>
@@ -964,7 +949,7 @@ export default function MembershipCoupons() {
                                     isLoading={
                                       isSendingSms &&
                                       smsSendingId ===
-                                        coupon.id
+                                      coupon.id
                                     }
                                   />
 
@@ -1072,7 +1057,7 @@ export default function MembershipCoupons() {
                                 className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-white text-blue-700 shadow-sm transition hover:bg-blue-100"
                               >
                                 {copiedCoupon ===
-                                coupon.couponCode ? (
+                                  coupon.couponCode ? (
                                   <Check
                                     size={17}
                                     className="text-emerald-600"
@@ -1155,7 +1140,7 @@ export default function MembershipCoupons() {
                               isLoading={
                                 isSendingSms &&
                                 smsSendingId ===
-                                  coupon.id
+                                coupon.id
                               }
                             />
 
@@ -1253,7 +1238,7 @@ export default function MembershipCoupons() {
           onConfirm={() => {
             if (
               smsConfirmation.type ===
-                "single" &&
+              "single" &&
               smsConfirmation.coupon
             ) {
               void handleSendSingleSms(
@@ -1387,15 +1372,13 @@ function SmsButton({
       onClick={() => onClick(coupon)}
       disabled={disabled}
       title={title}
-      className={`inline-flex ${
-        fullWidth
+      className={`inline-flex ${fullWidth
           ? "h-10 w-full rounded-xl"
           : "h-9 rounded-lg"
-      } cursor-pointer items-center justify-center gap-2 px-3 text-sm font-semibold transition ${
-        disabled
+        } cursor-pointer items-center justify-center gap-2 px-3 text-sm font-semibold transition ${disabled
           ? "cursor-not-allowed bg-slate-300 text-slate-500"
           : "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-      }`}
+        }`}
     >
       {isLoading ? (
         <RefreshCcw
@@ -1455,17 +1438,15 @@ function WhatsAppButton({
       onClick={() => onClick(coupon)}
       disabled={disabled}
       title={title}
-      className={`inline-flex ${
-        fullWidth
+      className={`inline-flex ${fullWidth
           ? "h-10 w-full rounded-xl"
           : "h-9 rounded-lg"
-      } cursor-pointer items-center justify-center gap-2 px-3 text-sm font-semibold ${
-        disabled
+        } cursor-pointer items-center justify-center gap-2 px-3 text-sm font-semibold ${disabled
           ? "cursor-not-allowed bg-slate-300 text-slate-500"
           : fullWidth
             ? "bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-700"
             : "border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100"
-      }`}
+        }`}
     >
       <FaWhatsapp
         size={fullWidth ? 18 : 17}
@@ -1816,10 +1797,10 @@ function Pagination({
 
               const showEllipsis =
                 previousPage !==
-                  undefined &&
+                undefined &&
                 page -
-                    previousPage >
-                  1;
+                previousPage >
+                1;
 
               return (
                 <div
@@ -1842,16 +1823,15 @@ function Pagination({
                     }
                     aria-current={
                       currentPage ===
-                      page
+                        page
                         ? "page"
                         : undefined
                     }
-                    className={`flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-lg px-3 text-sm font-semibold transition ${
-                      currentPage ===
-                      page
+                    className={`flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-lg px-3 text-sm font-semibold transition ${currentPage ===
+                        page
                         ? "bg-blue-900 text-white shadow-sm"
                         : "border border-slate-200 bg-white text-slate-700 hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700"
-                    }`}
+                      }`}
                   >
                     {page}
                   </button>
