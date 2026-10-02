@@ -10,7 +10,7 @@ import {
   Trophy,
   Gamepad2,
   Coffee,
-  ShoppingBag,
+  Scissors,
   Globe,
   Banknote,
   Users,
@@ -143,10 +143,10 @@ const mainNavItems: NavItem[] = [
       path: "/cafe",
     },
     {
-      id: "retail",
-      label: "RETAIL",
-      icon: ShoppingBag,
-      path: "/retail",
+      id: "salon",
+      label: "SALON",
+      icon: Scissors,
+      path: "/salon",
     },
   ];
 
@@ -206,8 +206,8 @@ const mainNavItems: NavItem[] = [
     case "cafe":
       // return cafeNavItems;
 
-    case "retail":
-      // return retailNavItems;
+    case "salon":
+      // return salonNavItems;
 
     default:
       return mainNavItems;
