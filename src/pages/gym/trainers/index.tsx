@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Search, Eye, RotateCcw, Trash2, X } from "lucide-react";
+import { Search, Eye, RotateCcw, Trash2, X, AlertTriangle, Loader2 } from "lucide-react";
 import {
   getMembers,
   reactivateMember,
@@ -35,6 +35,9 @@ export default function GymTrainers() {
   const [viewTrainer, setViewTrainer] = useState<any | null>(null);
   const [actionError, setActionError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [confirmModal, setConfirmModal] = useState<
+    { type: "reactivate" | "delete"; trainer: any } | null
+  >(null);
 
   useEffect(() => {
     loadTrainers();
@@ -121,14 +124,11 @@ export default function GymTrainers() {
       setActionError("Failed to reactivate trainer.");
     } finally {
       setBusyId(null);
+      setConfirmModal(null);
     }
   };
 
   const handlePermanentDelete = async (id: string) => {
-    if (!window.confirm("Permanently delete this trainer? This cannot be undone.")) {
-      return;
-    }
-
     setActionError("");
     setBusyId(id);
     try {
@@ -138,6 +138,7 @@ export default function GymTrainers() {
       setActionError("Failed to permanently delete trainer.");
     } finally {
       setBusyId(null);
+      setConfirmModal(null);
     }
   };
 
@@ -285,7 +286,7 @@ export default function GymTrainers() {
                                   type="button"
                                   title="Reactivate"
                                   disabled={busyId === trainer.id}
-                                  onClick={() => handleReactivate(trainer.id)}
+                                  onClick={() => setConfirmModal({ type: "reactivate", trainer })}
                                   className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-emerald-200 text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                                 >
                                   <RotateCcw size={14} />
@@ -294,7 +295,7 @@ export default function GymTrainers() {
                                   type="button"
                                   title="Delete permanently"
                                   disabled={busyId === trainer.id}
-                                  onClick={() => handlePermanentDelete(trainer.id)}
+                                  onClick={() => setConfirmModal({ type: "delete", trainer })}
                                   className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-red-200 text-red-700 transition hover:bg-red-50 disabled:opacity-50"
                                 >
                                   <Trash2 size={14} />
@@ -447,6 +448,81 @@ export default function GymTrainers() {
                 className="cursor-pointer rounded-md border border-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+
+      {confirmModal && createPortal(
+        <div
+          className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/60 px-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && busyId !== confirmModal.trainer.id) {
+              setConfirmModal(null);
+            }
+          }}
+        >
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-start gap-4 px-6 pt-6">
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+                  confirmModal.type === "delete"
+                    ? "bg-red-50 text-red-600"
+                    : "bg-emerald-50 text-emerald-600"
+                }`}
+              >
+                {confirmModal.type === "delete" ? (
+                  <AlertTriangle size={20} />
+                ) : (
+                  <RotateCcw size={20} />
+                )}
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">
+                  {confirmModal.type === "delete" ? "Delete Trainer" : "Reactivate Trainer"}
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  {confirmModal.type === "delete"
+                    ? "This permanently removes the trainer and their records. This cannot be undone."
+                    : "This trainer will be moved to Pending status, same as a newly registered trainer."}
+                </p>
+              </div>
+            </div>
+
+            <div className="mx-6 mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
+              <div className="font-medium text-gray-900">{confirmModal.trainer.name}</div>
+              <div className="mt-0.5 text-gray-500">{confirmModal.trainer.membershipNumber}</div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+              <button
+                type="button"
+                disabled={busyId === confirmModal.trainer.id}
+                onClick={() => setConfirmModal(null)}
+                className="cursor-pointer rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busyId === confirmModal.trainer.id}
+                onClick={() =>
+                  confirmModal.type === "delete"
+                    ? handlePermanentDelete(confirmModal.trainer.id)
+                    : handleReactivate(confirmModal.trainer.id)
+                }
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition disabled:opacity-60 ${
+                  confirmModal.type === "delete"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-emerald-600 hover:bg-emerald-700"
+                }`}
+              >
+                {busyId === confirmModal.trainer.id && (
+                  <Loader2 size={14} className="animate-spin" />
+                )}
+                {confirmModal.type === "delete" ? "Delete" : "Reactivate"}
               </button>
             </div>
           </div>
