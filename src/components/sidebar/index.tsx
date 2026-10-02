@@ -14,6 +14,7 @@ import {
   Globe,
   Banknote,
   Users,
+  UserCog,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -70,6 +71,20 @@ const gymNavItems: NavItem[] = [
     label: "Payments",
     icon: Banknote,
     path: "/gym/payments",
+    submenu: null,
+  },
+  {
+    id: "gym-members",
+    label: "Members",
+    icon: Users,
+    path: "/gym/members",
+    submenu: null,
+  },
+  {
+    id: "gym-trainers",
+    label: "Trainers",
+    icon: UserCog,
+    path: "/gym/trainers",
     submenu: null,
   }
 ];

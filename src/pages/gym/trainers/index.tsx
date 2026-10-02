@@ -1,0 +1,458 @@
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { Search, Eye, RotateCcw, Trash2, X } from "lucide-react";
+import {
+  getMembers,
+  reactivateMember,
+  permanentlyDeleteMember,
+} from "@/services/gym-members-api";
+
+const paymentStatusLabel = (status: number) => {
+  switch (status) {
+    case 1:
+      return "Pending";
+    case 2:
+      return "Paid";
+    case 3:
+      return "Overdue";
+    case 4:
+      return "Completed";
+    case 5:
+      return "Cancelled";
+    default:
+      return "Unknown";
+  }
+};
+
+export default function GymTrainers() {
+  const [tab, setTab] = useState<"active" | "deleted">("active");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [trainers, setTrainers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [viewTrainer, setViewTrainer] = useState<any | null>(null);
+  const [actionError, setActionError] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadTrainers();
+  }, []);
+
+  const loadTrainers = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await getMembers(true);
+
+      const rows =
+        response?.additionalData?.response ??
+        response?.response ??
+        response ??
+        [];
+
+      const mapped = Array.isArray(rows)
+        ? rows
+            .filter((trainer: any) =>
+              (trainer.membershipNumber ?? "").startsWith("GYM-TRA"),
+            )
+            .map((trainer: any) => ({
+              id: trainer.id,
+              name: `${trainer.firstName ?? ""} ${trainer.lastName ?? ""}`.trim(),
+              firstName: trainer.firstName ?? "",
+              lastName: trainer.lastName ?? "",
+              membershipNumber: trainer.membershipNumber ?? "",
+              email: trainer.email ?? "",
+              phoneNumber: trainer.phoneNumber ?? "",
+              dateOfBirth: trainer.dateOfBirth ?? "",
+              membershipStatus: trainer.membershipStatus ?? "",
+              membershipPlanTitle: trainer.membershipPlanTitle ?? "",
+              paymentStatus: trainer.paymentStatus ?? 0,
+              isSavedFingerprints: !!trainer.isSavedFingerprints,
+              isDeleted: !!trainer.isDeleted,
+              deletedAt: trainer.deletedAt ?? null,
+            }))
+        : [];
+
+      setTrainers(mapped);
+    } catch {
+      setTrainers([]);
+      setError("Failed to load trainers.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, tab]);
+
+  const tabFiltered = trainers.filter((trainer) =>
+    tab === "deleted" ? trainer.isDeleted : !trainer.isDeleted,
+  );
+
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const filteredTrainers = tabFiltered.filter((trainer) => {
+    if (!normalizedSearchTerm) return true;
+
+    return [trainer.name, trainer.membershipNumber, trainer.email, trainer.phoneNumber]
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedSearchTerm);
+  });
+
+  const total = filteredTrainers.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const start = (page - 1) * pageSize;
+  const pageItems = filteredTrainers.slice(start, start + pageSize);
+
+  const activeCount = trainers.filter((trainer) => !trainer.isDeleted).length;
+  const deletedCount = trainers.filter((trainer) => trainer.isDeleted).length;
+
+  const handleReactivate = async (id: string) => {
+    setActionError("");
+    setBusyId(id);
+    try {
+      await reactivateMember(id);
+      await loadTrainers();
+    } catch {
+      setActionError("Failed to reactivate trainer.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handlePermanentDelete = async (id: string) => {
+    if (!window.confirm("Permanently delete this trainer? This cannot be undone.")) {
+      return;
+    }
+
+    setActionError("");
+    setBusyId(id);
+    try {
+      await permanentlyDeleteMember(id);
+      await loadTrainers();
+    } catch {
+      setActionError("Failed to permanently delete trainer.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
+              Trainers
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              View gym trainers and manage soft-deleted records
+            </p>
+          </div>
+
+          <div className="w-full max-w-md">
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-md px-3 py-2 text-sm shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-gray-300">
+              <Search size={16} className="text-gray-400" />
+              <input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="w-full outline-none text-sm"
+                placeholder="Search by name, membership no, email, or phone..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {actionError && (
+          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {actionError}
+          </div>
+        )}
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setTab("active")}
+            className={`cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-all duration-300 ${
+              tab === "active"
+                ? "bg-blue-900 text-white shadow-sm"
+                : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            Active ({activeCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("deleted")}
+            className={`cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-all duration-300 ${
+              tab === "deleted"
+                ? "bg-blue-900 text-white shadow-sm"
+                : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            Deleted ({deletedCount})
+          </button>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:border-gray-300">
+          <div className="px-4 py-3">
+            <div className="overflow-x-auto">
+              <table className="w-full table-auto text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-600 border-b border-gray-100">
+                    <th className="py-2 px-3">TRAINER</th>
+                    <th className="py-2 px-3">MEMBERSHIP NO</th>
+                    <th className="py-2 px-3">PAYMENT</th>
+                    <th className="py-2 px-3">STATUS</th>
+                    <th className="py-2 px-3">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-sm text-gray-500">
+                        Loading trainers...
+                      </td>
+                    </tr>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-sm text-red-600">
+                        {error}
+                      </td>
+                    </tr>
+                  ) : pageItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-sm text-gray-500">
+                        No trainers found.
+                      </td>
+                    </tr>
+                  ) : (
+                    pageItems.map((trainer) => (
+                      <tr
+                        key={trainer.id}
+                        className="border-b border-gray-100 transition-colors duration-300 hover:bg-gray-50/80"
+                      >
+                        <td className="py-2 px-3 align-top">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-900 flex items-center justify-center text-sm font-semibold">
+                              {trainer.firstName?.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {trainer.name}
+                              </div>
+                              <div className="text-xs text-gray-500">{trainer.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2 px-3 align-top text-gray-700">
+                          {trainer.membershipNumber}
+                        </td>
+                        <td className="py-2 px-3 align-top">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
+                            {paymentStatusLabel(trainer.paymentStatus)}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 align-top">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs ${
+                              trainer.isDeleted
+                                ? "bg-red-50 text-red-700"
+                                : "bg-emerald-50 text-emerald-700"
+                            }`}
+                          >
+                            {trainer.isDeleted ? "Deleted" : trainer.membershipStatus}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 align-top">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              title="View"
+                              onClick={() => setViewTrainer(trainer)}
+                              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-gray-200 text-gray-600 transition hover:bg-gray-50"
+                            >
+                              <Eye size={14} />
+                            </button>
+
+                            {trainer.isDeleted && (
+                              <>
+                                <button
+                                  type="button"
+                                  title="Reactivate"
+                                  disabled={busyId === trainer.id}
+                                  onClick={() => handleReactivate(trainer.id)}
+                                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-emerald-200 text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                                >
+                                  <RotateCcw size={14} />
+                                </button>
+                                <button
+                                  type="button"
+                                  title="Delete permanently"
+                                  disabled={busyId === trainer.id}
+                                  onClick={() => handlePermanentDelete(trainer.id)}
+                                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-red-200 text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="px-4 py-3 border-t border-gray-100 bg-white flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Showing {total === 0 ? 0 : start + 1} to{" "}
+              {Math.min(start + pageSize, total)} of {total} entries
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-gray-600">Rows:</label>
+                <select
+                  value={pageSize}
+                  onChange={(event) => {
+                    setPageSize(Number(event.target.value));
+                    setPage(1);
+                  }}
+                  className="border rounded-md px-2 py-1 text-sm"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                </select>
+              </div>
+              <button
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="px-3 py-1 rounded-md border bg-white text-sm disabled:opacity-50 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm hover:bg-gray-50"
+              >
+                Prev
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setPage(index + 1)}
+                    className={`px-2 py-1 text-sm rounded-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm ${page === index + 1 ? "bg-gray-900 text-white" : "bg-white border hover:bg-gray-50"}`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages}
+                className="px-3 py-1 rounded-md border bg-white text-sm disabled:opacity-50 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm hover:bg-gray-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {viewTrainer && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setViewTrainer(null);
+            }
+          }}
+        >
+          <div className="w-full max-w-lg rounded-lg bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+              <h2 className="text-lg font-semibold text-gray-900">Trainer Details</h2>
+              <button
+                type="button"
+                onClick={() => setViewTrainer(null)}
+                className="cursor-pointer text-gray-400 hover:text-gray-600"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 px-5 py-4 text-sm">
+              <div>
+                <p className="text-xs text-gray-500">Name</p>
+                <p className="font-medium text-gray-900">{viewTrainer.name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Membership No</p>
+                <p className="font-medium text-gray-900">{viewTrainer.membershipNumber}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Email</p>
+                <p className="font-medium text-gray-900">{viewTrainer.email || "-"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Phone</p>
+                <p className="font-medium text-gray-900">{viewTrainer.phoneNumber || "-"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Date of Birth</p>
+                <p className="font-medium text-gray-900">{viewTrainer.dateOfBirth || "-"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Plan</p>
+                <p className="font-medium text-gray-900">
+                  {viewTrainer.membershipPlanTitle || "-"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Payment Status</p>
+                <p className="font-medium text-gray-900">
+                  {paymentStatusLabel(viewTrainer.paymentStatus)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Membership Status</p>
+                <p className="font-medium text-gray-900">
+                  {viewTrainer.isDeleted ? "Deleted" : viewTrainer.membershipStatus}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Fingerprint Saved</p>
+                <p className="font-medium text-gray-900">
+                  {viewTrainer.isSavedFingerprints ? "Yes" : "No"}
+                </p>
+              </div>
+              {viewTrainer.isDeleted && (
+                <div className="col-span-2">
+                  <p className="text-xs text-gray-500">Deleted At</p>
+                  <p className="font-medium text-gray-900">
+                    {viewTrainer.deletedAt
+                      ? new Date(viewTrainer.deletedAt).toLocaleString()
+                      : "-"}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end border-t border-gray-100 px-5 py-3">
+              <button
+                type="button"
+                onClick={() => setViewTrainer(null)}
+                className="cursor-pointer rounded-md border border-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+    </div>
+  );
+}
