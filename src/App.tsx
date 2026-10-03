@@ -19,6 +19,10 @@ import CafeMenu from "./pages/cafe/menu"
 import BadmintonDashboard from "./pages/badminton/dashboard"
 import BadmintonPayments from "./pages/badminton/payments"
 import BadmintonCourts from "./pages/badminton/courts"
+import GamingDashboard from "./pages/gaming/dashboard"
+import GamingPayments from "./pages/gaming/payments"
+import GamingGames from "./pages/gaming/games"
+import GamingSettings from "./pages/gaming/settings"
 import Staff from "./pages/staff"
 import MembershipCoupons from "./pages/memberships/Coupons"
 
@@ -63,6 +67,13 @@ function App() {
       <Route element={<AdminLayout><BadmintonCourts /></AdminLayout>} path="/badminton/courts" />
 
       <Route path="/badminton" element={<Navigate to="/badminton/dashboard" />} />
+
+      <Route element={<AdminLayout><GamingDashboard /></AdminLayout>} path="/gaming/dashboard" />
+      <Route element={<AdminLayout><GamingPayments /></AdminLayout>} path="/gaming/payments" />
+      <Route element={<AdminLayout><GamingGames /></AdminLayout>} path="/gaming/games" />
+      <Route element={<AdminLayout><GamingSettings /></AdminLayout>} path="/gaming/settings" />
+
+      <Route path="/gaming" element={<Navigate to="/gaming/dashboard" />} />
     </Routes>
   )
 }

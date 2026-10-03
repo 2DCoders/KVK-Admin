@@ -179,6 +179,37 @@ const badmintonNavItems: NavItem[] = [
   }
 ];
 
+const gamingNavItems: NavItem[] = [
+  {
+    id: "gaming-dashboard",
+    label: "Dashboard",
+    icon: Gauge,
+    path: "/gaming/dashboard",
+    submenu: null,
+  },
+  {
+    id: "gaming-payments",
+    label: "Payments",
+    icon: Banknote,
+    path: "/gaming/payments",
+    submenu: null,
+  },
+  {
+    id: "gaming-games",
+    label: "Games",
+    icon: Gamepad2,
+    path: "/gaming/games",
+    submenu: null,
+  },
+  {
+    id: "gaming-settings",
+    label: "Settings",
+    icon: Settings,
+    path: "/gaming/settings",
+    submenu: null,
+  }
+];
+
 const mainNavItems: NavItem[] = [
   {
     id: "dashboard",
@@ -307,10 +338,10 @@ const mainNavItems: NavItem[] = [
     case "badminton":
       return badmintonNavItems;
 
-    // Future modules
     case "gaming":
-      // return gamingNavItems;
+      return gamingNavItems;
 
+    // Future modules
     case "salon":
       // return salonNavItems;
 
