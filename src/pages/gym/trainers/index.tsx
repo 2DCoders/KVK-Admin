@@ -24,11 +24,32 @@ const paymentStatusLabel = (status: number) => {
   }
 };
 
+const MEMBERSHIP_STATUS_OPTIONS = ["Active", "Inactive", "Blocked", "Suspended"];
+const PAYMENT_STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "1", label: "Pending" },
+  { value: "2", label: "Paid" },
+  { value: "3", label: "Overdue" },
+  { value: "4", label: "Completed" },
+  { value: "5", label: "Cancelled" },
+];
+
+const statusBadgeClasses = (trainer: { isDeleted: boolean; membershipStatus: string }) => {
+  if (trainer.isDeleted) return "bg-red-50 text-red-700";
+
+  const status = (trainer.membershipStatus || "").toLowerCase();
+  if (status === "blocked" || status === "suspended") return "bg-red-50 text-red-700";
+  if (status === "active") return "bg-emerald-50 text-emerald-700";
+  return "bg-amber-50 text-amber-700";
+};
+
 export default function GymTrainers() {
   const [tab, setTab] = useState<"active" | "deleted">("active");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [planFilter, setPlanFilter] = useState("all");
+  const [paymentFilter, setPaymentFilter] = useState("all");
   const [trainers, setTrainers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -90,14 +111,26 @@ export default function GymTrainers() {
 
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, tab]);
+  }, [searchTerm, tab, statusFilter, planFilter, paymentFilter]);
 
   const tabFiltered = trainers.filter((trainer) =>
     tab === "deleted" ? trainer.isDeleted : !trainer.isDeleted,
   );
 
+  const planOptions = Array.from(
+    new Set(
+      trainers
+        .map((trainer) => trainer.membershipPlanTitle)
+        .filter((title): title is string => !!title),
+    ),
+  ).sort();
+
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
   const filteredTrainers = tabFiltered.filter((trainer) => {
+    if (statusFilter !== "all" && trainer.membershipStatus !== statusFilter) return false;
+    if (planFilter !== "all" && trainer.membershipPlanTitle !== planFilter) return false;
+    if (paymentFilter !== "all" && String(trainer.paymentStatus) !== paymentFilter) return false;
+
     if (!normalizedSearchTerm) return true;
 
     return [trainer.name, trainer.membershipNumber, trainer.email, trainer.phoneNumber]
@@ -105,6 +138,15 @@ export default function GymTrainers() {
       .toLowerCase()
       .includes(normalizedSearchTerm);
   });
+
+  const hasActiveFilters =
+    statusFilter !== "all" || planFilter !== "all" || paymentFilter !== "all";
+
+  const clearFilters = () => {
+    setStatusFilter("all");
+    setPlanFilter("all");
+    setPaymentFilter("all");
+  };
 
   const total = filteredTrainers.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -199,6 +241,72 @@ export default function GymTrainers() {
           </button>
         </div>
 
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Status
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="rounded-md border border-gray-200 px-2 py-1.5 text-sm text-gray-700"
+            >
+              <option value="all">All</option>
+              {MEMBERSHIP_STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Plan
+            </label>
+            <select
+              value={planFilter}
+              onChange={(event) => setPlanFilter(event.target.value)}
+              className="rounded-md border border-gray-200 px-2 py-1.5 text-sm text-gray-700"
+            >
+              <option value="all">All</option>
+              {planOptions.map((plan) => (
+                <option key={plan} value={plan}>
+                  {plan}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Payment
+            </label>
+            <select
+              value={paymentFilter}
+              onChange={(event) => setPaymentFilter(event.target.value)}
+              className="rounded-md border border-gray-200 px-2 py-1.5 text-sm text-gray-700"
+            >
+              <option value="all">All</option>
+              {PAYMENT_STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="cursor-pointer text-sm font-medium text-blue-700 hover:underline"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:border-gray-300">
           <div className="px-4 py-3">
             <div className="overflow-x-auto">
@@ -260,11 +368,7 @@ export default function GymTrainers() {
                         </td>
                         <td className="py-2 px-3 align-top">
                           <span
-                            className={`px-2 py-0.5 rounded-full text-xs ${
-                              trainer.isDeleted
-                                ? "bg-red-50 text-red-700"
-                                : "bg-emerald-50 text-emerald-700"
-                            }`}
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusBadgeClasses(trainer)}`}
                           >
                             {trainer.isDeleted ? "Deleted" : trainer.membershipStatus}
                           </span>
@@ -419,9 +523,11 @@ export default function GymTrainers() {
               </div>
               <div>
                 <p className="text-xs text-gray-500">Membership Status</p>
-                <p className="font-medium text-gray-900">
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClasses(viewTrainer)}`}
+                >
                   {viewTrainer.isDeleted ? "Deleted" : viewTrainer.membershipStatus}
-                </p>
+                </span>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Fingerprint Saved</p>
