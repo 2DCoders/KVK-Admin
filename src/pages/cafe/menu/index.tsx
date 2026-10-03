@@ -212,7 +212,7 @@ export default function CafeMenu() {
                   <div className="flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 to-gray-50">
                     {item.image ? (
                       <img
-                        src={`data:image/jpeg;base64,${item.image}`}
+                        src={`data:image/png;base64,${item.image}`}
                         alt={item.name}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
