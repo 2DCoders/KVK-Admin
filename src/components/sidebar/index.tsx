@@ -210,6 +210,30 @@ const gamingNavItems: NavItem[] = [
   }
 ];
 
+const salonNavItems: NavItem[] = [
+  {
+    id: "salon-dashboard",
+    label: "Dashboard",
+    icon: Gauge,
+    path: "/salon/dashboard",
+    submenu: null,
+  },
+  {
+    id: "salon-payments",
+    label: "Payments",
+    icon: Banknote,
+    path: "/salon/payments",
+    submenu: null,
+  },
+  {
+    id: "salon-services",
+    label: "Services",
+    icon: Scissors,
+    path: "/salon/services",
+    submenu: null,
+  }
+];
+
 const mainNavItems: NavItem[] = [
   {
     id: "dashboard",
@@ -341,9 +365,8 @@ const mainNavItems: NavItem[] = [
     case "gaming":
       return gamingNavItems;
 
-    // Future modules
     case "salon":
-      // return salonNavItems;
+      return salonNavItems;
 
     default:
       return mainNavItems;

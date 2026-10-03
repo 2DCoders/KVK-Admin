@@ -23,6 +23,9 @@ import GamingDashboard from "./pages/gaming/dashboard"
 import GamingPayments from "./pages/gaming/payments"
 import GamingGames from "./pages/gaming/games"
 import GamingSettings from "./pages/gaming/settings"
+import SalonDashboard from "./pages/salon/dashboard"
+import SalonPayments from "./pages/salon/payments"
+import SalonServices from "./pages/salon/services"
 import Staff from "./pages/staff"
 import MembershipCoupons from "./pages/memberships/Coupons"
 
@@ -74,6 +77,12 @@ function App() {
       <Route element={<AdminLayout><GamingSettings /></AdminLayout>} path="/gaming/settings" />
 
       <Route path="/gaming" element={<Navigate to="/gaming/dashboard" />} />
+
+      <Route element={<AdminLayout><SalonDashboard /></AdminLayout>} path="/salon/dashboard" />
+      <Route element={<AdminLayout><SalonPayments /></AdminLayout>} path="/salon/payments" />
+      <Route element={<AdminLayout><SalonServices /></AdminLayout>} path="/salon/services" />
+
+      <Route path="/salon" element={<Navigate to="/salon/dashboard" />} />
     </Routes>
   )
 }
