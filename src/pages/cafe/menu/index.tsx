@@ -28,7 +28,7 @@ type MenuItem = {
 // under MenuCategory.Drinks, so it's labeled "Coffee" here to match the real data.
 const CATEGORY_OPTIONS = [
   { value: "1", label: "Breakfast" },
-  { value: "3", label: "Dinner" },
+  { value: "4", label: "Coffee" },
 ];
 
 const categoryLabel = (category: number) =>
