@@ -19,6 +19,7 @@ import {
   Wrench,
   PackageCheck,
   UtensilsCrossed,
+  CalendarDays,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -254,6 +255,13 @@ const mainNavItems: NavItem[] = [
     label: "Staff",
     icon: Users,
     path: "/main/staff",
+    submenu: null,
+  },
+  {
+    id: "holidays",
+    label: "Holidays",
+    icon: CalendarDays,
+    path: "/main/holidays",
     submenu: null,
   },
   {

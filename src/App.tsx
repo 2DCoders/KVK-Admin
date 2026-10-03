@@ -27,6 +27,7 @@ import SalonDashboard from "./pages/salon/dashboard"
 import SalonPayments from "./pages/salon/payments"
 import SalonServices from "./pages/salon/services"
 import Staff from "./pages/staff"
+import Holidays from "./pages/holidays"
 import MembershipCoupons from "./pages/memberships/Coupons"
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
       <Route element={<AdminLayout><Dashboard /></AdminLayout>} path="/main/dashboard" />
       <Route element={<AdminLayout><SettingsPage /></AdminLayout>} path="/main/settings" />
       <Route element={<AdminLayout><Staff /></AdminLayout>} path="/main/staff" />
+      <Route element={<AdminLayout><Holidays /></AdminLayout>} path="/main/holidays" />
       <Route element={<AdminLayout><Memberships /></AdminLayout>} path="/main/memberships" />
       <Route element={<AdminLayout><MembershipCoupons /></AdminLayout>} path="/main/memberships/coupons" />
 
