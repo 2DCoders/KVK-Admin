@@ -9,6 +9,10 @@ import GymPayments from "./pages/gym/payments"
 import GymMembers from "./pages/gym/members"
 import GymTrainers from "./pages/gym/trainers"
 import GymPlans from "./pages/gym/plans"
+import CarWashDashboard from "./pages/car-wash/dashboard"
+import CarWashPayments from "./pages/car-wash/payments"
+import CarWashServices from "./pages/car-wash/services"
+import CarWashPackages from "./pages/car-wash/packages"
 import Staff from "./pages/staff"
 import MembershipCoupons from "./pages/memberships/Coupons"
 
@@ -34,6 +38,13 @@ function App() {
       <Route element={<AdminLayout><GymPlans /></AdminLayout>} path="/gym/plans" />
 
       <Route path="/gym" element={<Navigate to="/gym/dashboard" />} />
+
+      <Route element={<AdminLayout><CarWashDashboard /></AdminLayout>} path="/car-wash/dashboard" />
+      <Route element={<AdminLayout><CarWashPayments /></AdminLayout>} path="/car-wash/payments" />
+      <Route element={<AdminLayout><CarWashServices /></AdminLayout>} path="/car-wash/services" />
+      <Route element={<AdminLayout><CarWashPackages /></AdminLayout>} path="/car-wash/packages" />
+
+      <Route path="/car-wash" element={<Navigate to="/car-wash/dashboard" />} />
     </Routes>
   )
 }
