@@ -137,7 +137,7 @@ export default function GymPayments() {
                 Payments
               </h1>
               <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-100">
-                Today
+                Gym
               </span>
             </div>
             <p className="text-sm text-gray-500 mt-1">

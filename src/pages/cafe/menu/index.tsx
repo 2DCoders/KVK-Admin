@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Search,
   Loader2,
@@ -7,6 +8,9 @@ import {
   CheckCircle2,
   XCircle,
   Users,
+  Eye,
+  X,
+  Sparkles,
 } from "lucide-react";
 import { getCafeMenu } from "@/services/cafe-api";
 
@@ -59,6 +63,7 @@ export default function CafeMenu() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [viewItem, setViewItem] = useState<MenuItem | null>(null);
 
   useEffect(() => {
     loadMenu();
@@ -209,7 +214,7 @@ export default function CafeMenu() {
                   key={item.id}
                   className="group flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-gray-300"
                 >
-                  <div className="flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 to-gray-50">
+                  <div className="relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 to-gray-50">
                     {item.image ? (
                       <img
                         src={`data:image/png;base64,${item.image}`}
@@ -219,6 +224,17 @@ export default function CafeMenu() {
                     ) : (
                       <ImageOff size={28} className="text-gray-300" />
                     )}
+
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-300 group-hover:bg-black/40 group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => setViewItem(item)}
+                        className="flex translate-y-2 cursor-pointer items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-lg transition-transform duration-300 group-hover:translate-y-0 hover:bg-gray-50"
+                      >
+                        <Eye size={14} />
+                        View
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex flex-1 flex-col p-5">
@@ -276,6 +292,111 @@ export default function CafeMenu() {
           )}
         </div>
       </div>
+
+      {viewItem &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-sm"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setViewItem(null);
+            }}
+          >
+            <div className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+              <div className="relative flex h-48 shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 to-gray-50">
+                {viewItem.image ? (
+                  <img
+                    src={`data:image/png;base64,${viewItem.image}`}
+                    alt={viewItem.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <ImageOff size={36} className="text-gray-300" />
+                )}
+                <button
+                  type="button"
+                  onClick={() => setViewItem(null)}
+                  className="absolute right-3 top-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-sm transition hover:bg-white hover:text-gray-900"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-6 py-5">
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="text-lg font-semibold text-gray-900">{viewItem.name}</h2>
+                  <span
+                    className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      viewItem.isActive
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {viewItem.isActive ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                    {viewItem.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+
+                <p className="mt-1 text-2xl font-bold text-blue-900">
+                  {formatLkr(viewItem.price)}
+                </p>
+
+                <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                    {categoryLabel(viewItem.category)}
+                  </span>
+                  {viewItem.preparationTimeInMinutes > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Clock size={14} />
+                      {viewItem.preparationTimeInMinutes} min
+                    </span>
+                  )}
+                  {portionSizeLabel(viewItem.portionSize) && (
+                    <span className="flex items-center gap-1">
+                      <Users size={14} />
+                      {portionSizeLabel(viewItem.portionSize)}
+                    </span>
+                  )}
+                </div>
+
+                {viewItem.description && (
+                  <div className="mt-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                      Description
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-700">{viewItem.description}</p>
+                  </div>
+                )}
+
+                {viewItem.ingredients && (
+                  <div className="mt-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                      Ingredients
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-700">{viewItem.ingredients}</p>
+                  </div>
+                )}
+
+                {viewItem.facts && (
+                  <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+                    <Sparkles size={16} className="mt-0.5 shrink-0 text-amber-500" />
+                    <p className="text-sm text-amber-800">{viewItem.facts}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end border-t border-gray-100 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={() => setViewItem(null)}
+                  className="cursor-pointer rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
