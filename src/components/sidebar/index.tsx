@@ -15,6 +15,7 @@ import {
   Banknote,
   Users,
   UserCog,
+  ClipboardList,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -85,6 +86,13 @@ const gymNavItems: NavItem[] = [
     label: "Trainers",
     icon: UserCog,
     path: "/gym/trainers",
+    submenu: null,
+  },
+  {
+    id: "gym-plans",
+    label: "Membership Plans",
+    icon: ClipboardList,
+    path: "/gym/plans",
     submenu: null,
   }
 ];

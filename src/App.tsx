@@ -8,6 +8,7 @@ import GymDashboard from "./pages/gym/dashboard"
 import GymPayments from "./pages/gym/payments"
 import GymMembers from "./pages/gym/members"
 import GymTrainers from "./pages/gym/trainers"
+import GymPlans from "./pages/gym/plans"
 import Staff from "./pages/staff"
 import MembershipCoupons from "./pages/memberships/Coupons"
 
@@ -30,6 +31,7 @@ function App() {
       <Route element={<AdminLayout><GymPayments /></AdminLayout>} path="/gym/payments" />
       <Route element={<AdminLayout><GymMembers /></AdminLayout>} path="/gym/members" />
       <Route element={<AdminLayout><GymTrainers /></AdminLayout>} path="/gym/trainers" />
+      <Route element={<AdminLayout><GymPlans /></AdminLayout>} path="/gym/plans" />
 
       <Route path="/gym" element={<Navigate to="/gym/dashboard" />} />
     </Routes>
