@@ -8,6 +8,7 @@ import {
   LineChart as LineChartIcon,
   Loader2,
   CalendarClock,
+  CalendarCheck,
 } from "lucide-react";
 import {
   BarChart,
@@ -20,12 +21,64 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { getSalonDashboard } from "@/services/salon-api";
+import { getSalonDashboard, getSalonBookings } from "@/services/salon-api";
 
 type SeatAvailability = {
   hourLabel: string;
   freeSeats: number;
   totalSeats: number;
+};
+
+type AppointmentTag = "upcoming" | "now" | "ended";
+
+type Appointment = {
+  id: string;
+  customerName: string;
+  seatName: string;
+  services: string;
+  startTime: string;
+  endTime: string;
+  status: number;
+  tag: AppointmentTag;
+};
+
+const bookingStatusLabel = (status: number) => {
+  switch (status) {
+    case 1:
+      return "Pending";
+    case 2:
+      return "Confirmed";
+    case 3:
+      return "In Progress";
+    case 4:
+      return "Completed";
+    case 5:
+      return "Cancelled";
+    case 6:
+      return "No Show";
+    default:
+      return "Unknown";
+  }
+};
+
+const formatTime = (time: string) => {
+  if (!time) return "";
+  const [hours, minutes] = time.split(":");
+  const hour = Number(hours);
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${displayHour}:${minutes} ${suffix}`;
+};
+
+const timeToMinutes = (time: string) => {
+  const [hours, minutes] = time.split(":").map(Number);
+  return (hours ?? 0) * 60 + (minutes ?? 0);
+};
+
+const TAG_STYLES: Record<AppointmentTag, { label: string; classes: string; dot: string }> = {
+  upcoming: { label: "Upcoming", classes: "bg-blue-50 text-blue-700", dot: "bg-blue-500" },
+  now: { label: "Now", classes: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
+  ended: { label: "Ended", classes: "bg-gray-100 text-gray-500", dot: "bg-gray-400" },
 };
 
 type DashboardData = {
@@ -82,9 +135,64 @@ export default function SalonDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isLoadingAppointments, setIsLoadingAppointments] = useState(false);
+  const [appointmentsError, setAppointmentsError] = useState("");
+
   useEffect(() => {
     loadDashboard();
+    loadTodaysAppointments();
   }, []);
+
+  const loadTodaysAppointments = async () => {
+    setIsLoadingAppointments(true);
+    setAppointmentsError("");
+
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const response = await getSalonBookings(today, today);
+
+      const rows =
+        response?.additionalData?.response ?? response?.response ?? response ?? [];
+
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+      const mapped: Appointment[] = Array.isArray(rows)
+        ? rows
+            .filter((booking: any) => booking.status !== 5 && booking.status !== 6)
+            .map((booking: any) => {
+              const startMinutes = timeToMinutes(booking.startTime ?? "00:00:00");
+              const endMinutes = timeToMinutes(booking.endTime ?? "00:00:00");
+
+              let tag: AppointmentTag = "upcoming";
+              if (nowMinutes >= endMinutes) tag = "ended";
+              else if (nowMinutes >= startMinutes) tag = "now";
+
+              return {
+                id: booking.id,
+                customerName: booking.customerName || "Walk-in",
+                seatName: booking.saloonName ?? "",
+                services: Array.isArray(booking.services)
+                  ? booking.services.map((s: any) => s.serviceName).filter(Boolean).join(", ")
+                  : "",
+                startTime: booking.startTime ?? "",
+                endTime: booking.endTime ?? "",
+                status: Number(booking.status ?? 0),
+                tag,
+              };
+            })
+            .sort((a: Appointment, b: Appointment) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))
+        : [];
+
+      setAppointments(mapped);
+    } catch {
+      setAppointments([]);
+      setAppointmentsError("Failed to load today's appointments.");
+    } finally {
+      setIsLoadingAppointments(false);
+    }
+  };
 
   const loadDashboard = async () => {
     setIsLoading(true);
@@ -225,6 +333,71 @@ export default function SalonDashboard() {
                       {slot.freeSeats}/{slot.totalSeats}
                     </p>
                     <p className="text-[11px] text-gray-500">seats free</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Today's Appointments */}
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md">
+          <div className="mb-3 flex items-center gap-2">
+            <CalendarCheck size={16} className="text-blue-700" />
+            <h3 className="text-sm font-semibold text-gray-900">Today's Appointments</h3>
+          </div>
+
+          {isLoadingAppointments ? (
+            <div className="flex items-center justify-center py-8 text-sm text-gray-500">
+              <Loader2 size={18} className="mr-2 animate-spin text-blue-700" />
+              Loading appointments...
+            </div>
+          ) : appointmentsError ? (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {appointmentsError}
+            </div>
+          ) : appointments.length === 0 ? (
+            <p className="py-6 text-center text-sm text-gray-500">
+              No appointments scheduled for today.
+            </p>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {appointments.map((appointment) => {
+                const tagStyle = TAG_STYLES[appointment.tag];
+
+                return (
+                  <div
+                    key={appointment.id}
+                    className="flex flex-wrap items-center justify-between gap-3 py-3 transition-colors duration-200 hover:bg-gray-50/80"
+                  >
+                    <div className="min-w-[110px] text-sm font-medium text-gray-900">
+                      {formatTime(appointment.startTime)} - {formatTime(appointment.endTime)}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-gray-900">
+                        {appointment.customerName}
+                      </div>
+                      <div className="truncate text-xs text-gray-500">
+                        {appointment.seatName}
+                        {appointment.services ? ` · ${appointment.services}` : ""}
+                      </div>
+                    </div>
+
+                    <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                      {bookingStatusLabel(appointment.status)}
+                    </span>
+
+                    <span
+                      className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${tagStyle.classes}`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${tagStyle.dot} ${
+                          appointment.tag === "now" ? "animate-pulse" : ""
+                        }`}
+                      />
+                      {tagStyle.label}
+                    </span>
                   </div>
                 );
               })}
