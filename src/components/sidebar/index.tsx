@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Wrench,
   PackageCheck,
+  UtensilsCrossed,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -126,6 +127,30 @@ const carWashNavItems: NavItem[] = [
     label: "Packages",
     icon: PackageCheck,
     path: "/car-wash/packages",
+    submenu: null,
+  }
+];
+
+const cafeNavItems: NavItem[] = [
+  {
+    id: "cafe-dashboard",
+    label: "Dashboard",
+    icon: Gauge,
+    path: "/cafe/dashboard",
+    submenu: null,
+  },
+  {
+    id: "cafe-payments",
+    label: "Payments",
+    icon: Banknote,
+    path: "/cafe/payments",
+    submenu: null,
+  },
+  {
+    id: "cafe-menu",
+    label: "Menu",
+    icon: UtensilsCrossed,
+    path: "/cafe/menu",
     submenu: null,
   }
 ];
@@ -252,15 +277,15 @@ const mainNavItems: NavItem[] = [
     case "car-wash":
       return carWashNavItems;
 
+    case "cafe":
+      return cafeNavItems;
+
     // Future modules
     case "badminton":
       // return badmintonNavItems;
 
     case "gaming":
       // return gamingNavItems;
-
-    case "cafe":
-      // return cafeNavItems;
 
     case "salon":
       // return salonNavItems;

@@ -13,6 +13,9 @@ import CarWashDashboard from "./pages/car-wash/dashboard"
 import CarWashPayments from "./pages/car-wash/payments"
 import CarWashServices from "./pages/car-wash/services"
 import CarWashPackages from "./pages/car-wash/packages"
+import CafeDashboard from "./pages/cafe/dashboard"
+import CafePayments from "./pages/cafe/payments"
+import CafeMenu from "./pages/cafe/menu"
 import Staff from "./pages/staff"
 import MembershipCoupons from "./pages/memberships/Coupons"
 
@@ -45,6 +48,12 @@ function App() {
       <Route element={<AdminLayout><CarWashPackages /></AdminLayout>} path="/car-wash/packages" />
 
       <Route path="/car-wash" element={<Navigate to="/car-wash/dashboard" />} />
+
+      <Route element={<AdminLayout><CafeDashboard /></AdminLayout>} path="/cafe/dashboard" />
+      <Route element={<AdminLayout><CafePayments /></AdminLayout>} path="/cafe/payments" />
+      <Route element={<AdminLayout><CafeMenu /></AdminLayout>} path="/cafe/menu" />
+
+      <Route path="/cafe" element={<Navigate to="/cafe/dashboard" />} />
     </Routes>
   )
 }
