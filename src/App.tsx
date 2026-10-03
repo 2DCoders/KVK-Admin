@@ -16,6 +16,9 @@ import CarWashPackages from "./pages/car-wash/packages"
 import CafeDashboard from "./pages/cafe/dashboard"
 import CafePayments from "./pages/cafe/payments"
 import CafeMenu from "./pages/cafe/menu"
+import BadmintonDashboard from "./pages/badminton/dashboard"
+import BadmintonPayments from "./pages/badminton/payments"
+import BadmintonCourts from "./pages/badminton/courts"
 import Staff from "./pages/staff"
 import MembershipCoupons from "./pages/memberships/Coupons"
 
@@ -54,6 +57,12 @@ function App() {
       <Route element={<AdminLayout><CafeMenu /></AdminLayout>} path="/cafe/menu" />
 
       <Route path="/cafe" element={<Navigate to="/cafe/dashboard" />} />
+
+      <Route element={<AdminLayout><BadmintonDashboard /></AdminLayout>} path="/badminton/dashboard" />
+      <Route element={<AdminLayout><BadmintonPayments /></AdminLayout>} path="/badminton/payments" />
+      <Route element={<AdminLayout><BadmintonCourts /></AdminLayout>} path="/badminton/courts" />
+
+      <Route path="/badminton" element={<Navigate to="/badminton/dashboard" />} />
     </Routes>
   )
 }

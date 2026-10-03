@@ -155,6 +155,30 @@ const cafeNavItems: NavItem[] = [
   }
 ];
 
+const badmintonNavItems: NavItem[] = [
+  {
+    id: "badminton-dashboard",
+    label: "Dashboard",
+    icon: Gauge,
+    path: "/badminton/dashboard",
+    submenu: null,
+  },
+  {
+    id: "badminton-payments",
+    label: "Payments",
+    icon: Banknote,
+    path: "/badminton/payments",
+    submenu: null,
+  },
+  {
+    id: "badminton-courts",
+    label: "Courts",
+    icon: Trophy,
+    path: "/badminton/courts",
+    submenu: null,
+  }
+];
+
 const mainNavItems: NavItem[] = [
   {
     id: "dashboard",
@@ -280,10 +304,10 @@ const mainNavItems: NavItem[] = [
     case "cafe":
       return cafeNavItems;
 
-    // Future modules
     case "badminton":
-      // return badmintonNavItems;
+      return badmintonNavItems;
 
+    // Future modules
     case "gaming":
       // return gamingNavItems;
 
