@@ -1,7 +1,9 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import {
   Settings,
   ChevronDown,
+  ChevronsUpDown,
   Calendar,
   Gauge,
   LayoutGrid,
@@ -20,6 +22,7 @@ import {
   PackageCheck,
   UtensilsCrossed,
   CalendarDays,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -382,6 +385,7 @@ const mainNavItems: NavItem[] = [
 })();
 
   return (
+    <>
     <aside
       className={`${
         isMobile ? "fixed inset-y-0 left-0 z-40" : "relative"
@@ -458,63 +462,12 @@ const mainNavItems: NavItem[] = [
                 </div>
 
                 {!collapsed && (
-                  <ChevronDown
-                    size={18}
-                    className={`text-gray-400 transition-transform duration-200 ${
-                      isModulesOpen ? "rotate-180" : ""
-                    }`}
-                  />
+                  <ChevronsUpDown size={16} className="text-gray-400" />
                 )}
               </div>
             </button>
 
-            {!collapsed && isModulesOpen && (
-              <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2">
-                {modules.map((module) => {
-                  const ModuleIcon = module.icon;
-
-                  const active =
-                    location.pathname === module.path ||
-                    location.pathname.startsWith(`${module.path}/`);
-
-                  return (
-                    <button
-                      type="button"
-                      key={module.id}
-                      onClick={() => {
-                        handleNavigation(module.path)
-                        setIsModulesOpen(false)
-                      }}
-                      className={`group flex cursor-pointer flex-col items-start gap-2 rounded-lg border p-3 text-left transition-all duration-150 ${
-                        active
-                          ? "border-blue-300 bg-blue-900 text-white shadow-sm"
-                          : "border-gray-200 bg-white text-gray-700 hover:border-blue-900 hover:bg-blue-50"
-                      }`}
-                    >
-                      <span
-                        className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                          active
-                            ? "bg-white/15 text-white"
-                            : "bg-blue-50 text-blue-900 group-hover:bg-blue-100"
-                        }`}
-                      >
-                        <ModuleIcon size={16} />
-                      </span>
-
-                      <span
-                        className={`text-[11px] font-semibold tracking-wide ${
-                          active ? "text-white" : "text-gray-700"
-                        }`}
-                      >
-                        {module.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {!collapsed && !isModulesOpen && isModuleActive && (
+            {!collapsed && isModuleActive && (
               <p className="mt-1.5 px-2 text-[11px] font-medium text-blue-900">
                 A module page is currently active
               </p>
@@ -658,5 +611,79 @@ const mainNavItems: NavItem[] = [
         </div>
       </div>
     </aside>
+
+    {isModulesOpen &&
+      createPortal(
+        <div
+          className="fixed inset-0 z-100 flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsModulesOpen(false);
+          }}
+        >
+          <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-start justify-between border-b border-gray-200 px-6 py-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Switch Module</h2>
+                <p className="text-sm text-gray-500">
+                  Select a business module to manage.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModulesOpen(false)}
+                className="cursor-pointer rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 p-6 sm:grid-cols-3">
+              {modules.map((module) => {
+                const ModuleIcon = module.icon;
+
+                const active =
+                  location.pathname === module.path ||
+                  location.pathname.startsWith(`${module.path}/`);
+
+                return (
+                  <button
+                    type="button"
+                    key={module.id}
+                    onClick={() => {
+                      handleNavigation(module.path);
+                      setIsModulesOpen(false);
+                    }}
+                    className={`group flex cursor-pointer flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
+                      active
+                        ? "border-blue-700 bg-blue-900 text-white shadow-sm"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-blue-300"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-12 w-12 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 ${
+                        active
+                          ? "bg-white/15 text-white"
+                          : "bg-blue-50 text-blue-900 group-hover:bg-blue-100"
+                      }`}
+                    >
+                      <ModuleIcon size={22} />
+                    </span>
+
+                    <span
+                      className={`text-sm font-medium ${
+                        active ? "text-white" : "text-gray-900"
+                      }`}
+                    >
+                      {module.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+    </>
   );
 }
