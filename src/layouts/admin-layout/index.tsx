@@ -1,3 +1,4 @@
+import { hasAllModuleAccess } from '@/lib/admin-access';
 import { useEffect, useState, type ReactNode } from 'react';
 import Navbar from '@/components/navbar';
 import Sidebar from '@/components/sidebar';
@@ -12,11 +13,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const admin = localStorage.getItem('admin') ? JSON.parse(localStorage.getItem('admin') as string) : null;
 
+  const canAccessAdmin = Boolean(admin?.token) && hasAllModuleAccess(admin?.modules);
+
   useEffect(() => {    
-    if (!admin?.token) {
+    if (!canAccessAdmin) {
+      localStorage.removeItem('admin');
       window.location.href = '/';
     }
-  }, [admin]);
+  }, [canAccessAdmin]);
+
+  if (!canAccessAdmin) return null;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-off-white via-white to-light-gray">

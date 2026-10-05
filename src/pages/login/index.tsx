@@ -1,3 +1,4 @@
+import { ADMIN_ACCESS_ERROR } from '@/lib/admin-access';
 import { useState } from "react";
 import {
   ArrowRight,
@@ -45,7 +46,10 @@ export default function Login() {
         visible: true,
         variant: "error",
         title: "Login Failed",
-        description: "Invalid user ID or password.",
+        description: (error as { response?: { status?: number } })?.response?.status === 403 ||
+          (error instanceof Error && error.message === ADMIN_ACCESS_ERROR)
+          ? ADMIN_ACCESS_ERROR
+          : "Invalid user ID or password.",
       });
     } finally {
       setLoading(false);
