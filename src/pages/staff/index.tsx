@@ -310,7 +310,10 @@ export default function Staff() {
 
   const handleOpenModuleModal = (staff: StaffMember) => {
     setSelectedStaff(staff);
-    setSelectedModules(staff.assignedModules ?? []);
+    // Ignore legacy module names that the API no longer accepts.
+    setSelectedModules((staff.assignedModules ?? []).filter(module =>
+      moduleOptions.some(option => option.id === module),
+    ));
     setIsModuleModalOpen(true);
   };
 
@@ -359,6 +362,7 @@ export default function Staff() {
         variant: "error",
         title: "Unable to assign modules",
         description:
+          (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
           "An error occurred while updating module access. Please try again.",
       });
     } finally {
