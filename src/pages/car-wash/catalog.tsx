@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
-import { ImageOff, Loader2, Pencil, Plus, Power, Search, Trash2, X } from "lucide-react";
+import { ImageOff, Loader2, Pencil, Plus, Power, Search, Trash2 } from "lucide-react";
+import CatalogFormModal from "./catalog-form";
+import { validateCatalogForm, type CatalogForm, type FormErrors } from "./catalog-form-model";
 import {
   getCarWashServices, getCarWashPackages, createCarWashService, updateCarWashService,
   deleteCarWashService, createCarWashPackage, updateCarWashPackage, deleteCarWashPackage,
@@ -11,13 +13,9 @@ type Item = {
   basPrice: number; pricesWithoutDiscounts: number; isActive: boolean;
   image: string | null; services: Item[];
 };
-type CatalogForm = {
-  title: string; description: string; price: string; pricesWithoutDiscounts: string;
-  features: string; isActive: boolean; serviceIds: string[];
-};
 const emptyForm: CatalogForm = {
   title: "", description: "", price: "", pricesWithoutDiscounts: "0",
-  features: "", isActive: true, serviceIds: [],
+  features: [""], isActive: true, serviceIds: [],
 };
 const rowsFrom = (data: any): any[] => {
   const rows = data?.additionalData?.response ?? data?.response ?? data;
@@ -33,7 +31,9 @@ const mapItem = (row: any): Item => ({
 const formFrom = (item: Item, isPackage: boolean): CatalogForm => ({
   title: item.title, description: item.description,
   price: String(isPackage ? item.basPrice : item.price),
-  pricesWithoutDiscounts: String(item.pricesWithoutDiscounts), features: item.features,
+  pricesWithoutDiscounts: String(item.pricesWithoutDiscounts),
+  features: item.features.split(",").map((feature) => feature.trim()).filter(Boolean).length
+    ? item.features.split(",").map((feature) => feature.trim()).filter(Boolean) : [""],
   isActive: item.isActive, serviceIds: item.services.map((service) => service.id),
 });
 const messageFrom = (error: any) => {
@@ -62,6 +62,7 @@ export default function CarWashCatalog({ kind }: { kind: "services" | "packages"
   const [form, setForm] = useState<CatalogForm>(emptyForm);
   const [image, setImage] = useState<File | null>(null);
   const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
   const [deleteTarget, setDeleteTarget] = useState<Item | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -85,7 +86,7 @@ export default function CarWashCatalog({ kind }: { kind: "services" | "packages"
 
   const openForm = (item?: Item) => {
     setForm(item ? formFrom(item, isPackage) : { ...emptyForm, serviceIds: [] });
-    setImage(null); setFormError(""); setNotice(""); setModal({ item });
+    setImage(null); setFormError(""); setFieldErrors({}); setNotice(""); setModal({ item });
   };
   const saveItem = async (values: CatalogForm, item?: Item, file?: File | null) => {
     const payload = new FormData();
@@ -97,7 +98,7 @@ export default function CarWashCatalog({ kind }: { kind: "services" | "packages"
     if (isPackage) {
       payload.append("PricesWithoutDiscounts", String(Number(values.pricesWithoutDiscounts)));
       values.serviceIds.forEach((id) => payload.append("ServiceIds", id));
-    } else { payload.append("Features", values.features.trim()); }
+    } else { payload.append("Features", values.features.map((feature) => feature.trim()).filter(Boolean).join(",")); }
     if (file) payload.append("Image", file);
     requireSuccess(isPackage
       ? await (item ? updateCarWashPackage(payload) : createCarWashPackage(payload))
@@ -107,17 +108,14 @@ export default function CarWashCatalog({ kind }: { kind: "services" | "packages"
     event.preventDefault();
     if (!modal || busy) return;
     setFormError("");
-    if (!form.title.trim()) { setFormError("Title is required."); return; }
-    if (form.price.trim() === "" || !Number.isFinite(Number(form.price)) || Number(form.price) < 0) {
-      setFormError("Enter a valid, non-negative price."); return;
-    }
-    if (isPackage && (!Number.isFinite(Number(form.pricesWithoutDiscounts)) || Number(form.pricesWithoutDiscounts) < 0)) {
-      setFormError("Enter a valid price before discount."); return;
-    }
-    if (isPackage && form.serviceIds.length === 0) { setFormError("Select at least one service."); return; }
+    const regularTotal = services.filter((service) => form.serviceIds.includes(service.id))
+      .reduce((total, service) => total + service.price, 0);
+    const errors = validateCatalogForm(form, isPackage, regularTotal, !modal.item, !!image);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) return;
     setBusy(true);
     try {
-      await saveItem(form, modal.item, image);
+      await saveItem(isPackage ? { ...form, pricesWithoutDiscounts: String(regularTotal) } : form, modal.item, image);
       setModal(null);
       setNotice(`${isPackage ? "Package" : "Service"} ${modal.item ? "updated" : "created"}.`);
       await load();
@@ -182,28 +180,21 @@ export default function CarWashCatalog({ kind }: { kind: "services" | "packages"
           </div>
         </article>)}
       </div>}
-    {modal && createPortal(<div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/60 px-4 py-6" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) setModal(null); }}>
-      <form onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="carwash-form-title" className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4"><h2 id="carwash-form-title" className="text-lg font-semibold">{modal.item ? "Edit" : "New"} {singular}</h2><button type="button" aria-label="Close" disabled={busy} onClick={() => setModal(null)}><X size={20} /></button></div>
-        <fieldset disabled={busy} className="space-y-4 overflow-y-auto px-6 py-5">
-          {formError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{formError}</p>}
-          <label className="block text-sm font-medium">Title<input required maxLength={100} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className={`${fieldClass} mt-1`} /></label>
-          <label className="block text-sm font-medium">Description<textarea maxLength={1000} rows={3} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className={`${fieldClass} mt-1`} /></label>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-medium">{isPackage ? "Package price" : "Price"} (LKR)<input required type="number" min={0} step="0.01" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} className={`${fieldClass} mt-1`} /></label>
-            {isPackage && <label className="block text-sm font-medium">Price before discount (LKR)<input required type="number" min={0} step="0.01" value={form.pricesWithoutDiscounts} onChange={(event) => setForm({ ...form, pricesWithoutDiscounts: event.target.value })} className={`${fieldClass} mt-1`} /></label>}
-          </div>
-          {!isPackage && <label className="block text-sm font-medium">Features<textarea maxLength={1000} rows={2} placeholder="Comma separated features" value={form.features} onChange={(event) => setForm({ ...form, features: event.target.value })} className={`${fieldClass} mt-1`} /></label>}
-          <label className="block text-sm font-medium">Status<select value={String(form.isActive)} onChange={(event) => setForm({ ...form, isActive: event.target.value === "true" })} className={`${fieldClass} mt-1`}><option value="true">Active</option><option value="false">Inactive</option></select></label>
-          <label className="block text-sm font-medium">Image<input type="file" accept="image/*" onChange={(event) => setImage(event.target.files?.[0] ?? null)} className={`${fieldClass} mt-1`} />{modal.item?.image && !image && <span className="mt-1 block text-xs text-gray-500">The current image is kept unless you choose a replacement.</span>}</label>
-          {isPackage && <div><p className="mb-2 text-sm font-medium">Included services</p><div className="max-h-52 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3">
-            {services.length === 0 && <p className="text-sm text-gray-500">Create a service before creating a package.</p>}
-            {services.map((service) => <label key={service.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.serviceIds.includes(service.id)} disabled={!service.isActive && !form.serviceIds.includes(service.id)} onChange={(event) => setForm({ ...form, serviceIds: event.target.checked ? [...form.serviceIds, service.id] : form.serviceIds.filter((id) => id !== service.id) })} /><span>{service.title} {!service.isActive && "(Inactive)"} — {formatLkr(service.price)}</span></label>)}
-          </div></div>}
-        </fieldset>
-        <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4"><button type="button" disabled={busy} onClick={() => setModal(null)} className="action-secondary rounded-lg px-4 py-2 text-sm">Cancel</button><button type="submit" disabled={busy} className="action-primary inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm disabled:opacity-50">{busy && <Loader2 size={16} className="animate-spin" />}Save {singular}</button></div>
-      </form>
-    </div>, document.body)}
+    {modal && <CatalogFormModal
+      isPackage={isPackage}
+      editing={!!modal.item}
+      form={form}
+      errors={fieldErrors}
+      error={formError}
+      image={image}
+      existingImage={modal.item?.image}
+      services={services}
+      busy={busy}
+      onChange={(values) => { setForm(values); setFieldErrors({}); }}
+      onImage={(file) => { setImage(file); setFieldErrors((errors) => ({ ...errors, image: undefined })); }}
+      onClose={() => { if (!busy) setModal(null); }}
+      onSubmit={submit}
+    />}
     {deleteTarget && createPortal(<div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/60 px-4">
       <div role="dialog" aria-modal="true" aria-labelledby="carwash-delete-title" className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow-xl">
         <h2 id="carwash-delete-title" className="text-lg font-semibold">Delete {singular}</h2><p className="text-sm text-gray-600">Permanently delete “{deleteTarget.title}”? This cannot be undone.</p>
