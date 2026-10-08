@@ -195,7 +195,10 @@ export default function GamingSettings() {
         setSlotConfigId(null);
         setSlotForm(defaultSlotConfigForm);
       }
-    } catch {
+    } catch (error) {
+      if ((error as { response?: { status?: number } })?.response?.status !== 404) {
+        setSlotConfigError("Failed to load slot configuration. Please try again.");
+      }
       setSlotConfigId(null);
       setSlotForm(defaultSlotConfigForm);
     } finally {

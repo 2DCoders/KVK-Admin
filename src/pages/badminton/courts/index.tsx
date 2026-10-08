@@ -238,8 +238,12 @@ export default function BadmintonCourts() {
         setSlotConfigId(null);
         setSlotForm(defaultSlotConfigForm);
       }
-    } catch {
-      // No configuration exists yet for this court — fall back to the create form.
+    } catch (error) {
+      // A missing configuration is expected for a new court; other failures
+      // must be reported instead of being silently treated as missing data.
+      if ((error as { response?: { status?: number } })?.response?.status !== 404) {
+        setSlotConfigError("Failed to load slot configuration. Please try again.");
+      }
       setSlotConfigId(null);
       setSlotForm(defaultSlotConfigForm);
     } finally {
