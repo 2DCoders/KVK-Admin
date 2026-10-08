@@ -1,3 +1,4 @@
+import { notify } from "@/lib/notifications";
 import { ADMIN_ACCESS_ERROR } from '@/lib/admin-access';
 import { useState, type FormEvent } from 'react';
 import { ArrowRight, Eye, EyeOff, Layers3, LockKeyhole, ShieldCheck, Loader2 } from 'lucide-react';
@@ -17,6 +18,7 @@ export default function Login() {
     try {
       const admin = await login(username, password);
       localStorage.setItem('admin', JSON.stringify(admin));
+      notify.success('Signed in successfully.');
       navigate('/main/dashboard');
     } catch (error) {
       setError((error as { response?: { status?: number } })?.response?.status === 403 || (error instanceof Error && error.message === ADMIN_ACCESS_ERROR) ? ADMIN_ACCESS_ERROR : 'Unable to sign in. Check your username and password and try again.');

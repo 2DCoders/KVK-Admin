@@ -1,9 +1,10 @@
+import { useFeedbackState } from "@/lib/use-feedback-state";
 import { useEffect, useId, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { Check, Loader2, Search, UserRoundCheck, X } from "lucide-react";
 import { assignTrainer, getGymTrainers } from "@/services/gym-members-api";
 
-type Trainer = { id: string; name: string; email: string; specialization: string };
+type Trainer = { id: string; name: string; email: string; specialization: string; membershipStatus: string };
 type Member = { id: string; name: string; membershipNumber: string; trainerId: string | null; assignedTrainer: string };
 type Props = { member: Member; onClose: () => void; onAssigned: (trainer: Trainer) => void };
 
@@ -14,7 +15,7 @@ export default function AssignTrainerModal({ member, onClose, onAssigned }: Prop
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useFeedbackState<string>("", "error");
   useEffect(() => {
     let cancelled = false;
     getGymTrainers().then((data) => {
@@ -23,6 +24,7 @@ export default function AssignTrainerModal({ member, onClose, onAssigned }: Prop
       if (!cancelled) setTrainers(rows.filter((trainer) => !trainer.isDeleted).map((trainer) => ({
         id: trainer.id, name: `${trainer.firstName ?? ""} ${trainer.lastName ?? ""}`.trim(),
         email: trainer.email ?? "", specialization: trainer.specialization ?? "",
+        membershipStatus: trainer.membershipStatus ?? "Unknown",
       })).sort((a, b) => a.name.localeCompare(b.name)));
     }).catch((err) => {
       if (!cancelled) setError(err?.response?.data?.message || err?.message || "Unable to load trainers");
@@ -34,7 +36,7 @@ export default function AssignTrainerModal({ member, onClose, onAssigned }: Prop
     .toLowerCase().includes(search.trim().toLowerCase()));
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!selected || saving) return;
+    if (!selected || selected.membershipStatus !== "Active" || saving) return;
     setSaving(true);
     setError("");
     try {
@@ -64,16 +66,17 @@ export default function AssignTrainerModal({ member, onClose, onAssigned }: Prop
         {loading ? <p className="flex items-center justify-center gap-2 py-6 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" />Loading trainers...</p>
           : <fieldset disabled={saving} className="min-w-0 space-y-2"><legend className="mb-2 text-sm font-semibold text-slate-700">Choose trainer</legend>
             {!filtered.length && <p className="py-4 text-center text-sm text-slate-500">{trainers.length ? "No trainers match your search." : "No trainers are available for assignment."}</p>}
-            {filtered.map((trainer) => <label key={trainer.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 ${selectedId === trainer.id ? "border-blue-300 bg-blue-50" : "border-slate-200 hover:bg-slate-50"}`}>
-              <input type="radio" name="trainer" value={trainer.id} checked={selectedId === trainer.id} onChange={() => setSelectedId(trainer.id)} className="mt-1 accent-blue-900" />
+            {filtered.map((trainer) => <label key={trainer.id} className={`flex items-start gap-3 rounded-xl border p-3 ${trainer.membershipStatus !== "Active" ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-60" : selectedId === trainer.id ? "cursor-pointer border-blue-300 bg-blue-50" : "cursor-pointer border-slate-200 hover:bg-slate-50"}`}>
+              <input type="radio" name="trainer" value={trainer.id} disabled={trainer.membershipStatus !== "Active"} checked={selectedId === trainer.id} onChange={() => setSelectedId(trainer.id)} className="mt-1 accent-blue-900" />
               <span className="min-w-0"><span className="block text-sm font-semibold text-slate-800">{trainer.name}</span><span className="block break-all text-xs text-slate-500">{trainer.email}</span>
                 {trainer.specialization && <span className="mt-1 block text-xs text-slate-600">{trainer.specialization}</span>}</span>
+              <span className="ml-auto rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">{trainer.membershipStatus}</span>
             </label>)}
           </fieldset>}
       </div>
       <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 bg-slate-50 p-4">
         <button type="button" disabled={saving} onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium disabled:opacity-50">Cancel</button>
-        <button type="submit" disabled={loading || saving || !selected || selectedId === member.trainerId} className="inline-flex items-center gap-2 rounded-lg bg-blue-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+        <button type="submit" disabled={loading || saving || !selected || selected.membershipStatus !== "Active" || selectedId === member.trainerId} className="inline-flex items-center gap-2 rounded-lg bg-blue-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}{saving ? "Saving..." : "Assign Trainer"}</button>
       </div>
     </form>

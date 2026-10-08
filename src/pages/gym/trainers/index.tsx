@@ -1,3 +1,5 @@
+import { notify } from "@/lib/notifications";
+import { useFeedbackState } from "@/lib/use-feedback-state";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Search, Eye, RotateCcw, Trash2, X, AlertTriangle, Loader2, Users } from "lucide-react";
@@ -53,11 +55,11 @@ export default function GymTrainers() {
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [trainers, setTrainers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useFeedbackState<string>("", "error");
   const [viewTrainer, setViewTrainer] = useState<any | null>(null);
   const [rosterTrainer, setRosterTrainer] = useState<any | null>(null);
   const [assignedMembers, setAssignedMembers] = useState<AssignedMember[]>([]);
-  const [actionError, setActionError] = useState("");
+  const [actionError, setActionError] = useFeedbackState<string>("", "error");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmModal, setConfirmModal] = useState<
     { type: "reactivate" | "delete"; trainer: any } | null
@@ -183,6 +185,7 @@ export default function GymTrainers() {
     setBusyId(id);
     try {
       await reactivateMember(id);
+      notify.success("Trainer reactivated successfully.");
       await loadTrainers();
     } catch {
       setActionError("Failed to reactivate trainer.");
@@ -197,6 +200,7 @@ export default function GymTrainers() {
     setBusyId(id);
     try {
       await permanentlyDeleteMember(id);
+      notify.success("Trainer deleted successfully.");
       await loadTrainers();
     } catch {
       setActionError("Failed to permanently delete trainer.");
