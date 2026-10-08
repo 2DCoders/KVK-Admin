@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Search, Eye, RotateCcw, Trash2, X, AlertTriangle, Loader2 } from "lucide-react";
+import { Search, Eye, RotateCcw, Trash2, X, AlertTriangle, Loader2, Users } from "lucide-react";
+import AssignedMembersModal, { type AssignedMember } from "./assigned-members-modal";
 import {
   getMembers,
   reactivateMember,
@@ -54,6 +55,8 @@ export default function GymTrainers() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [viewTrainer, setViewTrainer] = useState<any | null>(null);
+  const [rosterTrainer, setRosterTrainer] = useState<any | null>(null);
+  const [assignedMembers, setAssignedMembers] = useState<AssignedMember[]>([]);
   const [actionError, setActionError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmModal, setConfirmModal] = useState<
@@ -108,6 +111,15 @@ export default function GymTrainers() {
         : [];
 
       setTrainers(mapped);
+      setAssignedMembers(Array.isArray(rows) ? rows.filter((member: any) =>
+        !member.isDeleted && member.trainerId && (member.membershipNumber ?? "").startsWith("GYM-MEM"))
+        .map((member: any) => ({
+          id: member.id, trainerId: member.trainerId,
+          name: `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim(),
+          membershipNumber: member.membershipNumber ?? "", email: member.email ?? "",
+          phoneNumber: member.phoneNumber ?? "", membershipPlanTitle: member.membershipPlanTitle ?? "",
+          membershipStatus: member.membershipStatus ?? "",
+        })) : []);
       setViewTrainer((current: any) => current ? mapped.find((trainer) => trainer.id === current.id) ?? current : null);
     } catch {
       if (!background) {
@@ -325,6 +337,7 @@ export default function GymTrainers() {
                   <tr className="text-left text-xs text-gray-600 border-b border-gray-100">
                     <th className="py-2 px-3">TRAINER</th>
                     <th className="py-2 px-3">MEMBERSHIP NO</th>
+                    <th className="py-2 px-3">ASSIGNED MEMBERS</th>
                     <th className="py-2 px-3">PAYMENT</th>
                     <th className="py-2 px-3">STATUS</th>
                     <th className="py-2 px-3">ACTIONS</th>
@@ -333,19 +346,19 @@ export default function GymTrainers() {
                 <tbody>
                   {isLoading ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-sm text-gray-500">
+                      <td colSpan={6} className="py-8 text-center text-sm text-gray-500">
                         Loading trainers...
                       </td>
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-sm text-red-600">
+                      <td colSpan={6} className="py-8 text-center text-sm text-red-600">
                         {error}
                       </td>
                     </tr>
                   ) : pageItems.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-sm text-gray-500">
+                      <td colSpan={6} className="py-8 text-center text-sm text-gray-500">
                         No trainers found.
                       </td>
                     </tr>
@@ -371,6 +384,10 @@ export default function GymTrainers() {
                         <td className="py-2 px-3 align-top text-gray-700">
                           {trainer.membershipNumber}
                         </td>
+                        <td className="py-2 px-3 align-top"><button type="button" onClick={() => setRosterTrainer(trainer)}
+                          aria-label={`View members assigned to ${trainer.name}`} className="rounded-md bg-blue-50 px-2 py-1 text-sm font-semibold text-blue-900 hover:bg-blue-100">
+                          {assignedMembers.filter((member) => member.trainerId === trainer.id).length}
+                        </button></td>
                         <td className="py-2 px-3 align-top">
                           <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
                             {paymentStatusLabel(trainer.paymentStatus)}
@@ -392,6 +409,11 @@ export default function GymTrainers() {
                               className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-gray-200 text-gray-600 transition hover:bg-gray-50"
                             >
                               <Eye size={14} />
+                            </button>
+
+                            <button type="button" title="View assigned members" onClick={() => setRosterTrainer(trainer)}
+                              className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-blue-200 px-2 text-xs font-medium text-blue-900 hover:bg-blue-50">
+                              <Users size={14} />Members
                             </button>
 
                             {trainer.isDeleted && (
@@ -476,6 +498,9 @@ export default function GymTrainers() {
           </div>
         </div>
       </div>
+
+      {rosterTrainer && <AssignedMembersModal trainer={rosterTrainer}
+        members={assignedMembers.filter((member) => member.trainerId === rosterTrainer.id)} onClose={() => setRosterTrainer(null)} />}
 
       {viewTrainer && createPortal(
         <div
