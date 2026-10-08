@@ -101,8 +101,10 @@ export default function GymPayments() {
 
       setPayments(mappedPayments);
     } catch {
-      if (!background) setPayments([]);
-      setPaymentsError("Failed to load payments for the selected date.");
+      if (!background) {
+        setPayments([]);
+        setPaymentsError("Failed to load payments for the selected date.");
+      }
     } finally {
       if (!background) setIsLoadingPayments(false);
     }

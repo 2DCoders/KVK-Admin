@@ -111,9 +111,12 @@ export default function GymMembers() {
         : [];
 
       setMembers(mapped);
+      setViewMember((current: any) => current ? mapped.find((member) => member.id === current.id) ?? current : null);
     } catch {
-      if (!background) setMembers([]);
-      setError("Failed to load members.");
+      if (!background) {
+        setMembers([]);
+        setError("Failed to load members.");
+      }
     } finally {
       if (!background) setIsLoading(false);
     }
