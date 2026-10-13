@@ -31,6 +31,7 @@ import {
   Legend,
 } from "recharts";
 import { getGymDashboard } from "@/services/gym-dashboard-api";
+import ApprovalRequestsButton from "../trainers/approval-requests-button";
 import {
   reactivateMember,
   permanentlyDeleteMember,
@@ -282,13 +283,16 @@ export default function GymDashboard() {
   return (
     <div className="page-container">
       <div className="space-y-6">
-        <div>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
           <h1 className="page-heading">
             Gym Dashboard
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Overview of members, trainers, plans, and revenue
           </p>
+          </div>
+          <ApprovalRequestsButton onChanged={() => { void loadDashboard(); }} />
         </div>
 
         {actionError && (
