@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Search, Eye, RotateCcw, Trash2, X, AlertTriangle, Loader2, Users } from "lucide-react";
 import AssignedMembersModal, { type AssignedMember } from "./assigned-members-modal";
+import ApprovalRequestsModal from "./approval-requests-modal";
 import {
   getMembers,
   reactivateMember,
@@ -46,6 +47,7 @@ const statusBadgeClasses = (trainer: { isDeleted: boolean; membershipStatus: str
 };
 
 export default function GymTrainers() {
+  const [showApprovalRequests, setShowApprovalRequests] = useState(false);
   const [tab, setTab] = useState<"active" | "deleted">("active");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -242,7 +244,10 @@ export default function GymTrainers() {
           </div>
         )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setShowApprovalRequests(true)} className="cursor-pointer rounded-md border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-blue-900 hover:bg-blue-50">
+            Trainer Approval Requests
+          </button>
           <button
             type="button"
             onClick={() => setTab("active")}
@@ -674,6 +679,7 @@ export default function GymTrainers() {
         </div>,
         document.body,
       )}
+      {showApprovalRequests && <ApprovalRequestsModal onClose={() => setShowApprovalRequests(false)} onApproved={() => { void loadTrainers(); }} />}
     </div>
   );
 }
