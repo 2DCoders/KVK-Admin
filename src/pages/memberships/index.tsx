@@ -12,7 +12,7 @@ import {
   EyeIcon,
   Gift,
   Mail,
-  MoreHorizontal,
+  Clock3,
   Phone,
   RefreshCcw,
   Search,
@@ -23,9 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
 import { createPortal } from "react-dom";
-import { FaWhatsapp } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 type Member = {
@@ -48,12 +46,6 @@ type Member = {
 
 type StatusFilter = "all" | "1" | "2";
 
-type ActionMenuState = {
-  member: Member;
-  top: number;
-  left: number;
-} | null;
-
 export default function Memberships() {
   const [members, setMembers] = useState<Member[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,44 +64,11 @@ export default function Memberships() {
   const [isViewingMember, setIsViewingMember] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
-  const [actionMenu, setActionMenu] = useState<ActionMenuState>(null);
 
   const env = getEnv();
   const COUPON_CODE_ID = env.COUPON_CODE_ID;
 
   const navigate = useNavigate();
-
-  const handleToggleActionMenu = (
-    event: ReactMouseEvent<HTMLButtonElement>,
-    member: Member,
-  ) => {
-    event.stopPropagation();
-
-    if (actionMenu?.member.id === member.id) {
-      setActionMenu(null);
-      return;
-    }
-
-    const buttonRect = event.currentTarget.getBoundingClientRect();
-    const menuWidth = 208;
-    const menuHeight = 112;
-    const viewportPadding = 12;
-    const gap = 8;
-
-    let left = buttonRect.right - menuWidth;
-    left = Math.max(
-      viewportPadding,
-      Math.min(left, window.innerWidth - menuWidth - viewportPadding),
-    );
-
-    let top = buttonRect.bottom + gap;
-
-    if (top + menuHeight > window.innerHeight - viewportPadding) {
-      top = buttonRect.top - menuHeight - gap;
-    }
-
-    setActionMenu({ member, top, left });
-  };
 
   const handleGenerateCoupons = async() => {
 
@@ -141,24 +100,6 @@ export default function Memberships() {
       setLoading(false);
     }
   }
-
-  const handleCloseActionMenu = () => {
-    setActionMenu(null);
-  };
-
-  useEffect(() => {
-    if (!actionMenu) return;
-
-    const closeMenu = () => setActionMenu(null);
-
-    window.addEventListener("resize", closeMenu);
-    window.addEventListener("scroll", closeMenu, true);
-
-    return () => {
-      window.removeEventListener("resize", closeMenu);
-      window.removeEventListener("scroll", closeMenu, true);
-    };
-  }, [actionMenu]);
 
   const handleOpenApproveModal = (member: Member) => {
     setSelectedMember(member);
@@ -251,45 +192,6 @@ export default function Memberships() {
     handleFetchMembers();
   }, []);
 
-  const handleWhatsApp = (member: Member) => {
-    if (!member.phone) {
-      notify.error("Phone number not available.");
-      return;
-    }
-
-    // Convert local Sri Lankan number to international format
-    let phone = member.phone.replace(/\D/g, "");
-
-    if (phone.startsWith("0")) {
-      phone = "94" + phone.substring(1);
-    }
-
-    const message = `Hello ${member.firstName},
-
-      Thank you for registering with KVK Arena! 🎉
-
-      We have received your membership request.
-
-      Our membership features include:
-
-      ✅ Annual Membership Plan
-      • Valid for one year
-      • Renew after one year
-
-      ✅ Member Benefits
-      • 10% discount on every KVK Arena service
-
-      If you have any questions, feel free to reply to this message.
-
-      Thank you,
-      KVK Arena Team`;
-
-    window.open(
-      `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
-      "_blank",
-    );
-  };
-
   const handleViewMember = (member: Member) => {
     setSelectedMember(member);
     setIsViewingMember(true);
@@ -303,6 +205,23 @@ export default function Memberships() {
     setIsViewingMember(false);
     setIsApprovalConfirmed(false);
   };
+
+  const renderMemberActions = (member: Member, alignment: string) => (
+    <div className={`flex flex-wrap gap-2 ${alignment}`}>
+      <button type="button" className="action-secondary" onClick={() => handleViewMember(member)}
+        aria-label={`View ${member.firstName} ${member.lastName}`}>
+        <EyeIcon size={16} aria-hidden="true" /> View
+      </button>
+      {String(member.membershipStatus) === "2" && (
+        <button type="button" className="action-secondary" disabled={approvingId === member.id}
+          onClick={() => handleOpenApproveModal(member)} aria-label={`Approve ${member.firstName} ${member.lastName}`}>
+          {approvingId === member.id
+            ? <><RefreshCcw size={16} className="animate-spin" aria-hidden="true" /> Approving</>
+            : <><Check size={16} aria-hidden="true" /> Approve</>}
+        </button>
+      )}
+    </div>
+  );
 
   const filteredMembers = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();
@@ -461,7 +380,7 @@ export default function Memberships() {
           <SummaryCard
             title="Pending Approval"
             value={pendingCount}
-            icon={<MoreHorizontal size={20} />}
+            icon={<Clock3 size={20} />}
             iconClassName="bg-amber-50 text-amber-600"
           />
 
@@ -609,22 +528,7 @@ export default function Memberships() {
                         </td>
 
                         <td className="px-5 py-4">
-                          <div className="flex justify-end">
-                            <button
-                              type="button"
-                              onClick={(event) =>
-                                handleToggleActionMenu(event, member)
-                              }
-                              className="action-secondary inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700"
-                              aria-label={`Open actions for ${member.firstName} ${member.lastName}`}
-                              aria-expanded={
-                                actionMenu?.member.id === member.id
-                              }
-                              aria-haspopup="menu"
-                            >
-                              <MoreHorizontal size={18} />
-                            </button>
-                          </div>
+                          {renderMemberActions(member, "justify-end")}
                         </td>
                       </tr>
                     );
@@ -701,16 +605,7 @@ export default function Memberships() {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={(event) => handleToggleActionMenu(event, member)}
-                      className="action-secondary inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition hover:border-blue-900 hover:bg-blue-50 hover:text-blue-700"
-                      aria-expanded={actionMenu?.member.id === member.id}
-                      aria-haspopup="menu"
-                    >
-                      <MoreHorizontal size={18} />
-                      Actions
-                    </button>
+                    {renderMemberActions(member, "[&>button]:flex-1")}
                   </article>
                 );
               })
@@ -836,84 +731,6 @@ export default function Memberships() {
           )}
         </section>
       </div>
-      {actionMenu &&
-        createPortal(
-          <>
-            <button
-              type="button"
-              aria-label="Close action menu"
-              className="fixed inset-0 z-[9998] cursor-default bg-transparent"
-              onClick={handleCloseActionMenu}
-            />
-
-            <div
-              role="menu"
-              aria-label={`Actions for ${actionMenu.member.firstName} ${actionMenu.member.lastName}`}
-              className="surface-panel fixed z-[9999] w-52 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl shadow-slate-900/15"
-              style={{
-                top: actionMenu.top,
-                left: actionMenu.left,
-              }}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  handleWhatsApp(actionMenu.member);
-                  handleCloseActionMenu();
-                }}
-                className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                  <FaWhatsapp size={17} />
-                </span>
-                Send WhatsApp
-              </button>
-
-              {String(actionMenu.member.membershipStatus) === "2" ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    handleOpenApproveModal(actionMenu.member);
-                    handleCloseActionMenu();
-                  }}
-                  disabled={approvingId === actionMenu.member.id}
-                  className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-                    {approvingId === actionMenu.member.id ? (
-                      <RefreshCcw size={17} className="animate-spin" />
-                    ) : (
-                      <Check size={17} />
-                    )}
-                  </span>
-                  {approvingId === actionMenu.member.id
-                    ? "Approving"
-                    : "Approve"}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    handleViewMember(actionMenu.member);
-                    handleCloseActionMenu();
-                  }}
-                  className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-                    <EyeIcon size={17} />
-                  </span>
-                  View member
-                </button>
-              )}
-            </div>
-          </>,
-          document.body,
-        )}
-
       {selectedMember && (
         <MemberApprovalModal
           member={selectedMember}

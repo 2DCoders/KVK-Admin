@@ -100,6 +100,7 @@ export type MemberSlipReview = {
     phoneNumber: string;
     finalAmount: number;
     hasSlip: boolean;
+    slipRevision?: string | null;
 };
 
 const slipReviewUrl = `${API_URL}member-badminton-bookings/slip-review`;
@@ -107,17 +108,20 @@ const slipReviewUrl = `${API_URL}member-badminton-bookings/slip-review`;
 export const getMemberSlipReview = async (signal: AbortSignal) =>
     (await axios.get<MemberSlipReview[]>(slipReviewUrl, { ...authHeaders(), signal })).data;
 
-export const downloadMemberSlip = async (reference: string) => {
-    const response = await axios.get<Blob>(`${slipReviewUrl}/${reference}/slip`, { ...authHeaders(), responseType: "blob" });
-    const url = URL.createObjectURL(response.data);
+export const getMemberSlip = async (reference: string, slipRevision?: string | null, signal?: AbortSignal) =>
+    (await axios.get<Blob>(`${slipReviewUrl}/${reference}/slip`, { ...authHeaders(), params: { slipRevision }, responseType: "blob", signal })).data;
+
+export const downloadMemberSlip = async (reference: string, slipRevision?: string | null) => {
+    const slip = await getMemberSlip(reference, slipRevision);
+    const url = URL.createObjectURL(slip);
     const link = document.createElement("a");
     link.href = url;
-    const extension = response.data.type === "application/pdf" ? "pdf" : response.data.type === "image/png" ? "png" : "jpg";
+    const extension = slip.type === "application/pdf" ? "pdf" : slip.type === "image/png" ? "png" : "jpg";
     link.download = `badminton-${reference}.${extension}`;
     link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
-export const reviewMemberSlip = async (reference: string, approve: boolean, reason?: string) => {
-    return (await axios.post<{ smsSent?: boolean }>(`${slipReviewUrl}/${reference}`, { approve, reason }, authHeaders())).data;
+export const reviewMemberSlip = async (reference: string, approve: boolean, slipRevision?: string | null, reason?: string) => {
+    return (await axios.post<{ smsSent?: boolean }>(`${slipReviewUrl}/${reference}`, { approve, reason, slipRevision }, authHeaders())).data;
 };

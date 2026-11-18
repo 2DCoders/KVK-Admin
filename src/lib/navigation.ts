@@ -6,6 +6,7 @@ export const workspaceLinks: NavLink[] = [
   { label: 'Overview', path: '/main/dashboard', icon: LayoutDashboard },
   { label: 'Memberships', path: '/main/memberships', icon: Users },
   { label: 'Coupons', path: '/main/memberships/coupons', icon: Ticket },
+  { label: 'Awaiting approvals', path: '/main/awaiting-approvals', icon: ClipboardList },
   { label: 'Team & access', path: '/main/staff', icon: UserCog },
   { label: 'Holiday calendar', path: '/main/holidays', icon: CalendarDays },
 ];

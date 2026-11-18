@@ -18,6 +18,7 @@ import CafePayments from "./pages/cafe/payments"
 import CafeMenu from "./pages/cafe/menu"
 import BadmintonDashboard from "./pages/badminton/dashboard"
 import BadmintonPayments from "./pages/badminton/payments"
+import AwaitingApprovals from "./pages/awaiting-approvals"
 import BadmintonCourts from "./pages/badminton/courts"
 import GamingDashboard from "./pages/gaming/dashboard"
 import GamingPayments from "./pages/gaming/payments"
@@ -46,6 +47,7 @@ function App() {
       <Route element={<AdminLayout><Memberships /></AdminLayout>} path="/main/memberships" />
       <Route element={<AdminLayout><MembershipCoupons /></AdminLayout>} path="/main/memberships/coupons" />
 
+      <Route element={<AdminLayout><AwaitingApprovals /></AdminLayout>} path="/main/awaiting-approvals" />
       <Route path="/main" element={<Navigate to="/main/dashboard" />} />
 
 
@@ -72,6 +74,7 @@ function App() {
 
       <Route element={<AdminLayout><BadmintonDashboard /></AdminLayout>} path="/badminton/dashboard" />
       <Route element={<AdminLayout><BadmintonPayments /></AdminLayout>} path="/badminton/payments" />
+      <Route path="/badminton/pending-bookings" element={<Navigate to="/main/awaiting-approvals" replace />} />
       <Route element={<AdminLayout><BadmintonCourts /></AdminLayout>} path="/badminton/courts" />
 
       <Route path="/badminton" element={<Navigate to="/badminton/dashboard" />} />
