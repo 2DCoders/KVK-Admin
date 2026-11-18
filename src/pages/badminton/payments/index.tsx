@@ -1,3 +1,4 @@
+import MemberSlipReviews from "./member-slip-reviews";
 import { useFeedbackState } from "@/lib/use-feedback-state";
 import { useEffect, useState } from "react";
 import { Download, Search } from "lucide-react";
@@ -11,6 +12,8 @@ const paymentTypeLabel = (type: number) => {
       return "Cash";
     case 2:
       return "Card";
+    case 3:
+      return "Bank transfer";
     default:
       return "Unknown";
   }
@@ -141,6 +144,7 @@ export default function BadmintonPayments() {
 
   return (
     <div className="page-container">
+      <MemberSlipReviews onApproved={loadPayments} />
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>

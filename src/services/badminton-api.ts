@@ -92,3 +92,32 @@ export const updateSlotConfiguration = async (
     );
     return response.data;
 };
+
+
+export type MemberSlipReview = {
+    reference: string;
+    customerName: string;
+    phoneNumber: string;
+    finalAmount: number;
+    hasSlip: boolean;
+};
+
+const slipReviewUrl = `${API_URL}member-badminton-bookings/slip-review`;
+
+export const getMemberSlipReview = async (signal: AbortSignal) =>
+    (await axios.get<MemberSlipReview[]>(slipReviewUrl, { ...authHeaders(), signal })).data;
+
+export const downloadMemberSlip = async (reference: string) => {
+    const response = await axios.get<Blob>(`${slipReviewUrl}/${reference}/slip`, { ...authHeaders(), responseType: "blob" });
+    const url = URL.createObjectURL(response.data);
+    const link = document.createElement("a");
+    link.href = url;
+    const extension = response.data.type === "application/pdf" ? "pdf" : response.data.type === "image/png" ? "png" : "jpg";
+    link.download = `badminton-${reference}.${extension}`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+export const reviewMemberSlip = async (reference: string, approve: boolean, reason?: string) => {
+    return (await axios.post<{ smsSent?: boolean }>(`${slipReviewUrl}/${reference}`, { approve, reason }, authHeaders())).data;
+};

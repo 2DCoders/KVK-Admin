@@ -222,6 +222,9 @@ export default function MembershipCoupons() {
 
   useEffect(() => {
     void handleFetchCoupons();
+    const refreshOnFocus = () => { void handleFetchCoupons(); };
+    window.addEventListener("focus", refreshOnFocus);
+    return () => window.removeEventListener("focus", refreshOnFocus);
   }, [handleFetchCoupons]);
 
   /* =========================================================== ALERT =========================================================== */
