@@ -399,16 +399,8 @@ export default function MembershipCoupons() {
         return;
       }
 
-      const memberName =
-        coupon.userName?.trim() ||
-        "Member";
-
       const couponCode =
         coupon.couponCode?.trim() || "";
-
-      const offerName =
-        coupon.offerName?.trim() ||
-        "Member discount";
 
       const env = getEnv();
       const offerDays = env.BADMINTON_OFFER_DAYS;
@@ -424,20 +416,26 @@ export default function MembershipCoupons() {
         return;
       }
       const lastBookingDay = new Intl.DateTimeFormat("en-GB", {
-        day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Colombo",
+        day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Colombo",
       }).format(cutoff - 1);
 
       const message = [
-        `Hi ${memberName}, here is your KVK Arena badminton coupon.`,
-        `Coupon code: ${couponCode}`,
-        `Offer: ${offerName}`,
-        "You can use this coupon only once.",
-        `Registered members only. The ${offerDays}-day offer ends on ${lastBookingDay}. Book soon, as the link expires after that date.`,
+        "🏸 *Good news! You've received a badminton coupon from KVK Arena!*",
         "",
-        "Book here: https://kvk-arena-main.2dcoders.workers.dev/members/badminton",
-        "1. Choose your sessions and check availability.",
-        "2. Reserve your sessions, enter your details, apply the coupon, and book.",
-        "3. If payment is due, pay and upload your slip within 24 hours using the tracking link in your booking SMS or receipt.",
+        `Your coupon code: *${couponCode}*`,
+        "",
+        "- Valid for registered members only",
+        "- One-time use",
+        `- Expires on *${lastBookingDay}*`,
+        "",
+        "*Book now:*",
+        "https://kvk-arena-main.2dcoders.workers.dev/members/badminton",
+        "",
+        "Select your session, check availability, enter your details, and apply the coupon code.",
+        "",
+        "Complete your payment and upload the payment slip within *24 hours of booking*.",
+        "",
+        "⏳ Hurry! The offer expires soon!",
       ].join("\n");
 
       const whatsappUrl =
