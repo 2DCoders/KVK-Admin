@@ -13,6 +13,8 @@ export const getEnv = () => {
   return {
     API_URL: env?.API_URL ?? "",
     COUPON_CODE_ID: env?.COUPON_CODE_ID ?? "",
+    BADMINTON_OFFER_START_DATE: env?.BADMINTON_OFFER_START_DATE ?? "",
+    BADMINTON_OFFER_DAYS: Number(env?.BADMINTON_OFFER_DAYS ?? 0),
     CASHIER_LINKS: (env?.CASHIER_LINKS ?? {
       gym: "",
       carWash: "",

@@ -1,5 +1,6 @@
 import { useFeedbackState } from "@/lib/use-feedback-state";
 import Alert from "@/components/ui/alert";
+import { getEnv } from "@/env";
 import { getCouponCodes } from "@/services/auth-api";
 import { sendBulkSms, sendSingleSms } from "@/services/members-api";
 import {
@@ -409,11 +410,29 @@ export default function MembershipCoupons() {
         coupon.offerName?.trim() ||
         "Member discount";
 
+      const env = getEnv();
+      const offerDays = env.BADMINTON_OFFER_DAYS;
+      const start = new Date(`${env.BADMINTON_OFFER_START_DATE}T00:00:00+05:30`);
+      const cutoff = start.getTime() + offerDays * 86_400_000;
+      if (!Number.isInteger(offerDays) || offerDays < 1 || offerDays > 365 || !Number.isFinite(cutoff) || Date.now() >= cutoff) {
+        setPageAlert({
+          visible: true,
+          variant: "error",
+          title: "Booking Offer Unavailable",
+          description: "Check the configured dates before sharing this offer.",
+        });
+        return;
+      }
+      const lastBookingDay = new Intl.DateTimeFormat("en-GB", {
+        day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Colombo",
+      }).format(cutoff - 1);
+
       const message = [
         `Hi ${memberName}, here is your KVK Arena badminton coupon.`,
         `Coupon code: ${couponCode}`,
         `Offer: ${offerName}`,
         "You can use this coupon only once.",
+        `Registered members only. The ${offerDays}-day offer ends on ${lastBookingDay}. Book soon, as the link expires after that date.`,
         "",
         "Book here: https://kvk-arena-main.2dcoders.workers.dev/members/badminton",
         "1. Choose your sessions and check availability.",
