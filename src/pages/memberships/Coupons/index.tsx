@@ -415,7 +415,7 @@ export default function MembershipCoupons() {
         `Offer: ${offerName}`,
         "You can use this coupon only once.",
         "",
-        "Book here: https://kvkarena.lk/members/badminton",
+        "Book here: https://kvk-arena-main.2dcoders.workers.dev/members/badminton",
         "1. Choose your sessions and check availability.",
         "2. Reserve your sessions, enter your details, apply the coupon, and book.",
         "3. If payment is due, pay and upload your slip within 24 hours using the tracking link in your booking SMS or receipt.",
