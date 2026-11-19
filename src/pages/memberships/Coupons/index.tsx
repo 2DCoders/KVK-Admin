@@ -420,6 +420,8 @@ export default function MembershipCoupons() {
       }).format(cutoff - 1);
 
       const message = [
+        `Hi ${coupon.userName?.trim() || "Member"},`,
+        "",
         "🏸 *Good news! You've received a badminton coupon from KVK Arena!*",
         "",
         `Your coupon code: *${couponCode}*`,
