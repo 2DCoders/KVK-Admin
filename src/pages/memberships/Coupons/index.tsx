@@ -422,7 +422,7 @@ export default function MembershipCoupons() {
       const message = [
         `Hi ${coupon.userName?.trim() || "Member"},`,
         "",
-        "🏸 *Good news! You've received a badminton coupon from KVK Arena!*",
+        "\u{1F3F8} *Good news! You've received a badminton coupon from KVK Arena!*",
         "",
         `Your coupon code: *${couponCode}*`,
         "",
@@ -435,9 +435,11 @@ export default function MembershipCoupons() {
         "",
         "Select your session, check availability, enter your details, and apply the coupon code.",
         "",
+        "*Please note:* Bookings are confirmed on a first-come, first-served basis and are subject to session availability.",
+        "",
         "Complete your payment and upload the payment slip within *24 hours of booking*.",
         "",
-        "⏳ Hurry! The offer expires soon!",
+        "\u{23F3} Hurry! The offer expires soon!",
       ].join("\n");
 
       const whatsappUrl =
