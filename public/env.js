@@ -9,11 +9,11 @@ window.env = {
   // Cashier app links opened from the Main dashboard's "Cashiers" modal.
   // Fill these in with each cashier app's real URL.
   CASHIER_LINKS: {
-    gym: "https://kvk-gym-uat-cashier.vercel.app/",
-    carWash: "https://kvk-carwash-uat-cashier.vercel.app/",
-    cafe: "https://kvk-cafe-uat-cashier.vercel.app/",
-    badminton: "https://kvk-badminton-uat-cashier.vercel.app/",
-    gaming: "https://kvk-gaming-uat-cashier.vercel.app/",
-    salon: "https://kvk-salon-uat-cashier.vercel.app/",
+    gym: "https://gym.cashier.kvkarena.lk/",
+    carWash: "https://carwash.cashier.kvkarena.lk/",
+    cafe: "https://cafe.cashier.kvkarena.lk/",
+    badminton: "https://badminton.cashier.kvkarena.lk/",
+    gaming: "https://gaming.cashier.kvkarena.lk/",
+    salon: "https://salon.cashier.kvkarena.lk/",
   },
 };
