@@ -422,7 +422,7 @@ export default function MembershipCoupons() {
       const message = [
         `Hi ${coupon.userName?.trim() || "Member"},`,
         "",
-        "\u{1F3F8} *Good news! You've received a badminton coupon from KVK Arena!*",
+        "*Good news! You've received a badminton coupon from KVK Arena!*",
         "",
         `Your coupon code: *${couponCode}*`,
         "",
@@ -439,7 +439,7 @@ export default function MembershipCoupons() {
         "",
         "Complete your payment and upload the payment slip within *24 hours of booking*.",
         "",
-        "\u{23F3} Hurry! The offer expires soon!",
+        "Hurry! The offer expires soon!",
       ].join("\n");
 
       const whatsappUrl =
