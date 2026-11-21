@@ -2,6 +2,7 @@ import axios from "axios";
 import { Check, Copy, Download, EllipsisVertical, Eye, RefreshCw, Search, X } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
 import PaymentSlipPreview from "./payment-slip-preview";
+import BookingDetailsDialog from "./booking-details-dialog";
 import { downloadMemberSlip, getMemberSlipReview, reviewMemberSlip, type MemberSlipReview } from "@/services/badminton-api";
 
 function errorMessage(error: unknown) {
@@ -51,6 +52,7 @@ const paymentFilters = [
 
 export default function AwaitingApprovals() {
   const [preview, setPreview] = useState<MemberSlipReview | null>(null);
+  const [details, setDetails] = useState<MemberSlipReview | null>(null);
   const [rows, setRows] = useState<MemberSlipReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -216,6 +218,9 @@ export default function AwaitingApprovals() {
                       : <span className="whitespace-nowrap text-gray-500">{row.finalAmount === 0 ? "No payment due" : "No slip uploaded"}</span>}
                   </td>
                   <td className="px-4">
+                    <div className="flex items-center gap-2">
+                      <button type="button" className="action-secondary whitespace-nowrap" disabled={busy}
+                        onClick={() => setDetails(row)}>View booking details</button>
                       <button type="button" className="action-secondary" disabled={busy}
                         aria-label={`Booking actions for ${row.customerName}`} popoverTarget={`booking-actions-${row.reference}`}>
                         <EllipsisVertical size={16} />
@@ -248,6 +253,7 @@ export default function AwaitingApprovals() {
                         </button>
                         </>}
                       </div>
+                    </div>
                   </td>
                 </tr>
                 {canReview(row) && rejectReference === row.reference && <tr>
@@ -294,6 +300,7 @@ export default function AwaitingApprovals() {
         )}
       </section>
       {preview && <PaymentSlipPreview booking={preview} onClose={() => setPreview(null)} getErrorMessage={errorMessage} />}
+      {details && <BookingDetailsDialog key={details.reference} booking={details} onClose={() => setDetails(null)} />}
     </div>
   );
 }

@@ -109,6 +109,15 @@ export type MemberSlipReview = {
 
 const slipReviewUrl = `${API_URL}member-badminton-bookings/slip-review`;
 
+export type MemberBookingDetails = {
+    startDate: string | null;
+    endDate: string | null;
+    sessions: { date: string; startTime: string; endTime: string }[];
+};
+
+export const getMemberBookingDetails = async (reference: string, signal: AbortSignal) =>
+    (await axios.get<MemberBookingDetails>(`${slipReviewUrl}/${reference}/details`, { ...authHeaders(), signal })).data;
+
 export const getMemberSlipReview = async (signal: AbortSignal) =>
     (await axios.get<MemberSlipReview[]>(slipReviewUrl, { ...authHeaders(), signal })).data;
 
