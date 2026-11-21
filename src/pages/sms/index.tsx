@@ -1,10 +1,12 @@
 import axios from "axios";
-import { BarChart3, CalendarDays, ChevronDown, ClipboardList, Download, MessageSquare, Plus, RefreshCw, Search, Send, Users } from "lucide-react";
+import { BarChart3, CalendarDays, ChevronDown, ClipboardList, Download, MessageSquare, Pencil, Plus, RefreshCw, Search, Send, Trash2, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { getEnv } from "@/env";
+import { notify } from "@/lib/notifications";
 import type { SmsReport } from "./report";
 
-type Contact = { id: string; name: string; phone: string };
+type Contact = { id: string; name: string; phone: string; isManual: boolean };
+type ContactEditor = { mode: "edit" | "delete"; contact: Contact; name: string; phone: string };
 type Group = { id: string; name: string; memberIds: string[] };
 type Recipient = { phone: string; name: string | null; status: string };
 type Settings = { price: number; length: number; monthlyLimit: number; maxSegments: number };
@@ -89,8 +91,9 @@ const currentBillingPeriod = () => new Intl.DateTimeFormat("en-CA", {
   month: part.type === "month" ? Number(part.value) : period.month,
 }), { year: 2026, month: 1 });
 
-function ContactPicker({ contacts, selected, change }: {
+function ContactPicker({ contacts, selected, change, manage }: {
   contacts: Contact[]; selected: string[]; change: (ids: string[]) => void;
+  manage: (contact: Contact, mode: ContactEditor["mode"]) => void;
 }) {
   const [search, setSearch] = useState("");
   const matching = contacts.filter((contact) =>
@@ -98,7 +101,7 @@ function ContactPicker({ contacts, selected, change }: {
   return <div className="space-y-3">
     <div className="relative">
       <Search size={16} aria-hidden="true" className="pointer-events-none absolute bottom-3 left-3 text-slate-400" />
-      <input type="search" aria-label="Search coupon contacts" placeholder="Search by name or phone"
+      <input type="search" aria-label="Search contacts" placeholder="Search by name or phone"
         className={`${field} !mt-0 !pl-9`} value={search} onChange={(event) => setSearch(event.target.value)} />
     </div>
     <div className="flex flex-wrap items-center gap-2">
@@ -109,12 +112,20 @@ function ContactPicker({ contacts, selected, change }: {
     </div>
     <div role="region" aria-label="Contact list" tabIndex={matching.length > 5 ? 0 : undefined}
       className="max-h-60 divide-y divide-slate-200 overflow-y-auto overscroll-y-contain rounded-lg border border-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
-      {matching.length === 0 && <p className="p-3 text-sm">No matching coupon contacts.</p>}
-      {matching.map((contact) => <label key={contact.id} className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 border-l-2 border-transparent px-3 py-2.5 text-sm transition-colors hover:bg-slate-50 has-[:checked]:border-l-blue-600 has-[:checked]:bg-blue-50/60">
+      {matching.length === 0 && <p className="p-3 text-sm">No matching contacts.</p>}
+      {matching.map((contact) => <div key={contact.id} className="flex items-center gap-1 border-l-2 border-transparent pr-2 transition-colors hover:bg-slate-50 has-[:checked]:border-l-blue-600 has-[:checked]:bg-blue-50/60">
+        <label className="flex min-w-0 flex-1 cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5 text-sm">
         <input type="checkbox" className="size-4 accent-blue-600" checked={selected.includes(contact.id)} onChange={(event) =>
           change(event.target.checked ? [...selected, contact.id] : selected.filter((id) => id !== contact.id))} />
         <span className="font-medium text-slate-800">{contact.name}</span><span className="ml-auto text-xs tabular-nums text-slate-500">{contact.phone}</span>
-      </label>)}
+        </label>
+        {contact.isManual && <>
+          <button type="button" className="rounded-md p-2 text-slate-500 hover:bg-slate-200 hover:text-slate-900"
+            aria-label={`Edit ${contact.name}`} title="Edit contact" onClick={() => manage(contact, "edit")}><Pencil size={14} /></button>
+          <button type="button" className="rounded-md p-2 text-slate-500 hover:bg-red-50 hover:text-red-700"
+            aria-label={`Delete ${contact.name}`} title="Delete contact" onClick={() => manage(contact, "delete")}><Trash2 size={14} /></button>
+        </>}
+      </div>)}
     </div>
   </div>;
 }
@@ -193,28 +204,31 @@ export default function AdminSms() {
   const [reportPeriod, setReportPeriod] = useState(currentBillingPeriod);
   const [draft, setDraft] = useState<Draft>({ message: "", memberIds: [], phoneNumbers: [], groupId: null });
   const [phone, setPhone] = useState("");
+  const [contactName, setContactName] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [group, setGroup] = useState<Group>({ id: "", name: "", memberIds: [] });
+  const [newContact, setNewContact] = useState({ name: "", phone: "" });
+  const [contactEditor, setContactEditor] = useState<ContactEditor>();
   const [confirmation, setConfirmation] = useState<(Preview & { id: string; draft: Draft })>();
   const [result, setResult] = useState<Batch>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
   const dialog = useRef<HTMLDialogElement>(null);
+  const contactDialog = useRef<HTMLDialogElement>(null);
   const settings = history?.settings ?? defaults;
   const segments = countSegments(draft.message, settings.length);
 
   useEffect(() => {
     Promise.all([api.get<Contact[]>("contacts"), api.get<Group[]>("groups")])
       .then(([directory, saved]) => { setContacts(directory.data); setGroups(saved.data); })
-      .catch((failure) => setError(errorMessage(failure)));
+      .catch((failure) => notify.error(errorMessage(failure)));
   }, []);
 
   useEffect(() => {
     const controller = new AbortController();
     api.get<History>("history", { params: { page: 1 }, signal: controller.signal })
       .then(({ data }) => setHistory(data))
-      .catch((failure) => { if (!controller.signal.aborted) setError(errorMessage(failure)); });
+      .catch((failure) => { if (!controller.signal.aborted) notify.error(errorMessage(failure)); });
     return () => controller.abort();
   }, []);
 
@@ -223,23 +237,48 @@ export default function AdminSms() {
     if (!confirmation && dialog.current?.open) dialog.current.close();
   }, [confirmation]);
 
+  useEffect(() => {
+    if (contactEditor && !contactDialog.current?.open) contactDialog.current?.showModal();
+    if (!contactEditor && contactDialog.current?.open) contactDialog.current.close();
+  }, [contactEditor]);
+
   async function run(action: () => Promise<void>) {
     setBusy(true);
     setError("");
-    setNotice("");
     try { await action(); }
-    catch (failure) { setError(errorMessage(failure)); }
+    catch (failure) {
+      const message = errorMessage(failure);
+      if (contactDialog.current?.open || dialog.current?.open) setError(message);
+      else notify.error(message);
+    }
     finally { setBusy(false); }
   }
 
+  async function saveContact(name: string, phone: string) {
+    const { data } = await api.post<Contact>("contacts", { name, phone });
+    setContacts((current) => current.some((contact) => contact.id === data.id) ? current
+      : [...current, data].sort((a, b) => a.name.localeCompare(b.name)));
+    return data;
+  }
+
   function addPhone() {
+    if (busy) return;
+    if (!contactName.trim()) {
+      setPhoneError("Enter a contact name.");
+      return;
+    }
     if (!localMobileNumber.test(phone)) {
       setPhoneError(phoneFormatMessage);
       return;
     }
-    setDraft({ ...draft, phoneNumbers: [...new Set([...draft.phoneNumbers, phone])] });
-    setPhone("");
-    setPhoneError("");
+    return run(async () => {
+      const contact = await saveContact(contactName, phone);
+      setDraft((current) => ({ ...current, memberIds: [...new Set([...current.memberIds, contact.id])] }));
+      setContactName("");
+      setPhone("");
+      setPhoneError("");
+      notify.success(`${contact.name} selected from the shared contact list.`);
+    });
   }
 
   async function refreshHistory(targetPage: number) {
@@ -255,19 +294,18 @@ export default function AdminSms() {
         import("./report"),
       ]);
       downloadSmsReport(data);
+      notify.success("Monthly SMS report downloaded.");
     });
   }
 
   function review() {
-    if (!draft.groupId && phone && !localMobileNumber.test(phone)) {
-      setPhoneError(phoneFormatMessage);
+    if (!draft.groupId && (contactName.trim() || phone)) {
+      setPhoneError("Click Add contact to include this recipient before reviewing the SMS.");
       return;
     }
-    const input = { ...draft, phoneNumbers: phone && !draft.groupId
-      ? [...draft.phoneNumbers, phone] : draft.phoneNumbers };
     return run(async () => {
-      const { data } = await api.post<Preview>("quote", input);
-      setConfirmation({ ...data, id: crypto.randomUUID(), draft: input });
+      const { data } = await api.post<Preview>("quote", draft);
+      setConfirmation({ ...data, id: crypto.randomUUID(), draft });
     });
   }
 
@@ -283,9 +321,16 @@ export default function AdminSms() {
         return;
       }
       setResult(response.data);
+      const recipients = response.data.recipients;
+      const accepted = recipients.filter((recipient) => recipient.status === "Accepted").length;
+      const message = `${accepted} of ${recipients.length} recipients accepted by SMSlenz. See the send summary for details.`;
+      if (accepted === recipients.length && accepted > 0) notify.success(message);
+      else if (recipients.every((recipient) => ["Failed", "Skipped"].includes(recipient.status))) notify.error(message);
+      else notify.warning(message);
       setConfirmation(undefined);
       setDraft({ message: "", memberIds: [], phoneNumbers: [], groupId: null });
       setPhone("");
+      setContactName("");
       setPhoneError("");
       await refreshHistory(1);
     });
@@ -298,7 +343,52 @@ export default function AdminSms() {
       setGroups((current) => [...current.filter((item) => item.id !== id), data]
         .sort((a, b) => a.name.localeCompare(b.name)));
       setGroup(data);
-      setNotice("Promotional group saved.");
+      notify.success("Promotional group saved.");
+    });
+  }
+
+  function addGroupContact() {
+    if (!localMobileNumber.test(newContact.phone)) {
+      notify.error(phoneFormatMessage);
+      return;
+    }
+    return run(async () => {
+      const data = await saveContact(newContact.name, newContact.phone);
+      setGroup((current) => ({ ...current, memberIds: [...new Set([...current.memberIds, data.id])] }));
+      setNewContact({ name: "", phone: "" });
+      notify.success(`${data.name} selected for this group. Save the group to keep the selection.`);
+    });
+  }
+
+  function openContactEditor(contact: Contact, mode: ContactEditor["mode"]) {
+    if (busy) return;
+    setError("");
+    setContactEditor({ mode, contact, name: contact.name, phone: contact.phone.replace(/^\+94/, "0") });
+  }
+
+  function submitContactEdit() {
+    if (!contactEditor || busy) return;
+    const { contact, mode, name, phone } = contactEditor;
+    if (mode === "edit" && (!name.trim() || !localMobileNumber.test(phone))) {
+      setError(!name.trim() ? "Enter a contact name." : phoneFormatMessage);
+      return;
+    }
+    return run(async () => {
+      if (mode === "edit") {
+        const { data } = await api.put<Contact>(`contacts/${contact.id}`, { name, phone });
+        setContacts((current) => current.map((item) => item.id === contact.id ? data : item)
+          .sort((a, b) => a.name.localeCompare(b.name)));
+        notify.success("Contact updated.");
+      } else {
+        await api.delete(`contacts/${contact.id}`);
+        const remove = (ids: string[]) => ids.filter((id) => id !== contact.id);
+        setContacts((current) => current.filter((item) => item.id !== contact.id));
+        setDraft((current) => ({ ...current, memberIds: remove(current.memberIds) }));
+        setGroup((current) => ({ ...current, memberIds: remove(current.memberIds) }));
+        setGroups((current) => current.map((item) => ({ ...item, memberIds: remove(item.memberIds) })));
+        notify.success("Contact deleted.");
+      }
+      setContactEditor(undefined);
     });
   }
 
@@ -355,10 +445,8 @@ export default function AdminSms() {
       {tabs.map(({ label, icon: Icon }) =>
         <button key={label} type="button" aria-pressed={tab === label}
           className="-mb-px inline-flex min-h-11 items-center gap-1.5 border-b-2 border-transparent px-0.5 text-xs font-semibold text-slate-500 transition-colors hover:text-blue-700 aria-pressed:border-blue-600 aria-pressed:text-blue-700"
-          onClick={() => { setTab(label); setError(""); setNotice(""); }}><Icon size={14} aria-hidden="true" />{label}</button>)}
+          onClick={() => { setTab(label); setError(""); }}><Icon size={14} aria-hidden="true" />{label}</button>)}
     </nav>
-    {error && !confirmation && <p role="alert" className="rounded-md bg-red-50 p-3 text-red-800">{error}</p>}
-    {notice && <p role="status">{notice}</p>}
     {tab === "Send SMS" && <div className="grid items-start gap-5 xl:grid-cols-2">
       <div className="surface-panel min-w-0 overflow-hidden shadow-md shadow-slate-200/70">
       <header className="flex items-center gap-3 border-b border-slate-200 bg-slate-50/80 px-4 py-4 sm:px-6">
@@ -376,10 +464,17 @@ export default function AdminSms() {
         </select>
       </label>
       {!draft.groupId && <>
-        <ContactPicker contacts={contacts} selected={draft.memberIds}
+        <ContactPicker contacts={contacts} selected={draft.memberIds} manage={openContactEditor}
           change={(memberIds) => setDraft({ ...draft, memberIds })} />
-        <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4 sm:flex-nowrap">
+        <div className="grid gap-2 border-t border-slate-100 pt-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <input aria-label="Contact name" placeholder="Contact name" maxLength={100} disabled={busy}
+            className={`${field} min-w-0 !mt-0`} value={contactName} onChange={(event) => {
+              setContactName(event.target.value);
+              setPhoneError("");
+            }}
+            onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addPhone(); } }} />
           <input type="tel" inputMode="numeric" maxLength={10} aria-label="Mobile number" placeholder="07XXXXXXXX"
+            disabled={busy}
             aria-invalid={!!phoneError} aria-describedby={phoneError ? "sms-phone-error" : undefined}
             className={`${field} min-w-0 !mt-0`} value={phone}
             onChange={(event) => {
@@ -392,14 +487,10 @@ export default function AdminSms() {
               setPhoneError("");
             }}
             onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addPhone(); } }} />
-          <button type="button" className={`${button} shrink-0`} onClick={addPhone}><Plus size={15} /> Add number</button>
+          <button type="button" className={`${button} shrink-0`} disabled={busy || (!contactName.trim() && !phone)}
+            onClick={addPhone}><Plus size={15} /> Add contact</button>
         </div>
         {phoneError && <p id="sms-phone-error" role="alert" className="text-sm text-red-700">{phoneError}</p>}
-        <div className="flex flex-wrap gap-2">
-          {draft.phoneNumbers.map((number) => <button type="button" key={number} className={button}
-            aria-label={`Remove ${number}`} onClick={() =>
-              setDraft({ ...draft, phoneNumbers: draft.phoneNumbers.filter((item) => item !== number) })}>{number} ×</button>)}
-        </div>
       </>}
       </div>
       </div>
@@ -415,7 +506,7 @@ export default function AdminSms() {
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
       <p className="text-xs tabular-nums text-slate-500" aria-live="polite">{Array.from(draft.message).length} characters · {segments} / {settings.maxSegments} segments</p>
       <button type="button" className={primary} disabled={busy || !segments || segments > settings.maxSegments ||
-        !(draft.groupId || draft.memberIds.length || draft.phoneNumbers.length || phone.trim())} onClick={review}><Send size={15} /> Review SMS</button>
+        !(draft.groupId || draft.memberIds.length || contactName.trim() || phone)} onClick={review}><Send size={15} /> Review SMS</button>
       </div>
       </div>
       {result && <div className="space-y-2 xl:col-span-2"><h2 className="font-semibold">Latest send summary</h2><BatchDetails batch={result} /></div>}
@@ -424,7 +515,7 @@ export default function AdminSms() {
       <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900"><Users size={18} className="text-blue-600" /> Group details</h2>
       <div className="grid gap-4 sm:grid-cols-2">
       <label className="block text-sm font-medium">Saved group
-        <select className={field} value={group.id} onChange={(event) =>
+        <select className={field} value={group.id} disabled={busy} onChange={(event) =>
           setGroup(groups.find((item) => item.id === event.target.value) ?? { id: "", name: "", memberIds: [] })}>
           <option value="">New group</option>
           {groups.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -435,8 +526,23 @@ export default function AdminSms() {
           onChange={(event) => setGroup({ ...group, name: event.target.value })} />
       </label>
       </div>
-      <ContactPicker key={group.id} contacts={contacts} selected={group.memberIds}
+      <ContactPicker key={group.id} contacts={contacts} selected={group.memberIds} manage={openContactEditor}
         change={(memberIds) => setGroup({ ...group, memberIds })} />
+      <div className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+        <label className="min-w-0 flex-1 text-sm font-medium">Contact name
+          <input className={field} maxLength={100} value={newContact.name} disabled={busy}
+            onChange={(event) => setNewContact({ ...newContact, name: event.target.value })} />
+        </label>
+        <label className="min-w-0 flex-1 text-sm font-medium">Mobile number
+          <input className={field} type="tel" inputMode="numeric" maxLength={10} placeholder="07XXXXXXXX"
+            value={newContact.phone} disabled={busy} onChange={(event) => {
+              const phone = event.target.value.replace(/[^0-9]/g, "").slice(0, 10);
+              if (!phone || phone.startsWith("0")) setNewContact({ ...newContact, phone });
+            }} />
+        </label>
+        <button type="button" className={button} disabled={busy || !newContact.name.trim() || !newContact.phone}
+          onClick={addGroupContact}><Plus size={15} /> Add contact</button>
+      </div>
       <button type="button" className={primary} disabled={busy || !group.name.trim()} onClick={saveGroup}>Save group</button>
     </div>}
     {tab === "History & Usage" && <div className="surface-panel min-w-0 overflow-hidden shadow-md shadow-slate-200/70">
@@ -483,6 +589,33 @@ export default function AdminSms() {
       </div>
       </div>
     </div>}
+    <dialog ref={contactDialog} aria-labelledby="sms-contact-title"
+      className="surface-panel m-auto max-h-[85vh] w-11/12 max-w-md p-6 text-slate-900 backdrop:bg-slate-950/50"
+      onCancel={(event) => { event.preventDefault(); if (!busy) { setError(""); setContactEditor(undefined); } }}>
+      {contactEditor && <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); submitContactEdit(); }}>
+        <h2 id="sms-contact-title" className="text-lg font-semibold">{contactEditor.mode === "edit" ? "Edit contact" : "Delete contact"}</h2>
+        {contactEditor.mode === "edit" ? <>
+          <label className="block text-sm font-medium">Contact name
+            <input className={field} maxLength={100} value={contactEditor.name} disabled={busy}
+              onChange={(event) => setContactEditor({ ...contactEditor, name: event.target.value })} />
+          </label>
+          <label className="block text-sm font-medium">Mobile number
+            <input className={field} type="tel" inputMode="numeric" maxLength={10} placeholder="07XXXXXXXX"
+              value={contactEditor.phone} disabled={busy} onChange={(event) => {
+                const phone = event.target.value.replace(/[^0-9]/g, "").slice(0, 10);
+                if (!phone || phone.startsWith("0")) setContactEditor({ ...contactEditor, phone });
+                else setError(phoneFormatMessage);
+              }} />
+          </label>
+        </> : <p className="text-sm text-slate-600">Remove <strong>{contactEditor.contact.name}</strong> from the contact list and any saved groups?</p>}
+        {error && <p role="alert" className="text-sm text-red-800">{error}</p>}
+        <div className="flex justify-end gap-2">
+          <button type="button" className={button} disabled={busy} onClick={() => { setError(""); setContactEditor(undefined); }}>Cancel</button>
+          <button type="submit" className={contactEditor.mode === "delete" ? `${primary} !border-red-700 !bg-red-700` : primary}
+            disabled={busy}>{contactEditor.mode === "edit" ? "Save changes" : "Delete contact"}</button>
+        </div>
+      </form>}
+    </dialog>
     <dialog ref={dialog} aria-labelledby="sms-confirm-title"
       className="surface-panel m-auto max-h-[85vh] w-11/12 max-w-lg p-6 text-slate-900 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm"
       onCancel={(event) => { event.preventDefault(); if (!busy) setConfirmation(undefined); }}>
