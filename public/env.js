@@ -8,7 +8,7 @@ window.env = {
   BADMINTON_OFFER_DAYS: 7,
   SMS_PRICE_LKR: 1.00,
   SMS_LENGTH: 150,
-  SMS_MONTHLY_LIMIT: 4,
+  SMS_MONTHLY_LIMIT: 2000,
   SMS_MAX_SEGMENTS_PER_MESSAGE: 5,
 
   // Cashier app links opened from the Main dashboard's "Cashiers" modal.
