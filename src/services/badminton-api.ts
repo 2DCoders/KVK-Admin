@@ -98,8 +98,12 @@ export type MemberSlipReview = {
     reference: string;
     customerName: string;
     phoneNumber: string;
+    email: string;
+    couponCode: string | null;
+    createdAt: string;
     finalAmount: number;
     hasSlip: boolean;
+    status: "awaiting_payment" | "awaiting_approval" | "retry_payment" | "expired" | "approved" | "rejected" | "cancelled";
     slipRevision?: string | null;
 };
 

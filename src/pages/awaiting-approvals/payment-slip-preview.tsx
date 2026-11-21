@@ -38,7 +38,7 @@ export default function PaymentSlipPreview({ booking, onClose, getErrorMessage }
     <header className="flex items-start justify-between gap-4 border-b border-gray-100 px-4 py-3 sm:px-6">
       <div className="min-w-0">
         <h2 className="text-lg font-semibold text-gray-900">Payment slip</h2>
-        <p className="break-all text-sm text-gray-500">{customerName} ? {reference}</p>
+        <p className="break-all text-sm text-gray-500">{customerName}</p>
       </div>
       <button type="button" className="action-secondary" onClick={onClose} aria-label="Close preview"><X size={17} /></button>
     </header>
