@@ -1,9 +1,11 @@
 import { LayoutDashboard, Users, UserCog, CalendarDays, Settings, Ticket, Dumbbell, Car, Trophy, Gamepad2, Coffee, Scissors, CreditCard, ClipboardList, Wrench, Package, UtensilsCrossed, type LucideIcon } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 
 export type NavLink = { label: string; path: string; icon: LucideIcon };
 export type NavModule = { label: string; path: string; icon: LucideIcon; color: string; links: NavLink[] };
 export const workspaceLinks: NavLink[] = [
   { label: 'Overview', path: '/main/dashboard', icon: LayoutDashboard },
+  { label: 'SMS', path: '/main/sms', icon: MessageSquare },
   { label: 'Memberships', path: '/main/memberships', icon: Users },
   { label: 'Coupons', path: '/main/memberships/coupons', icon: Ticket },
   { label: 'Awaiting approvals', path: '/main/awaiting-approvals', icon: ClipboardList },

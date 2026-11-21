@@ -33,6 +33,7 @@ import SalonSeats from "./pages/salon/seats"
 import Staff from "./pages/staff"
 import Holidays from "./pages/holidays"
 import MembershipCoupons from "./pages/memberships/Coupons"
+import AdminSms from "./pages/sms"
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
       <Route element={<AdminLayout><Holidays /></AdminLayout>} path="/main/holidays" />
       <Route element={<AdminLayout><Memberships /></AdminLayout>} path="/main/memberships" />
       <Route element={<AdminLayout><MembershipCoupons /></AdminLayout>} path="/main/memberships/coupons" />
+      <Route element={<AdminLayout><AdminSms /></AdminLayout>} path="/main/sms" />
 
       <Route element={<AdminLayout><AwaitingApprovals /></AdminLayout>} path="/main/awaiting-approvals" />
       <Route path="/main" element={<Navigate to="/main/dashboard" />} />
