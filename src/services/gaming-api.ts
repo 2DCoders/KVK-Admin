@@ -39,6 +39,11 @@ export const getGamingCategories = async () => {
     return response.data;
 };
 
+export const createGamingCategory = async (payload: { name: string; code: string; price: number }) => {
+    const response = await axios.post(`${API_URL}gaming-m/gaming-categories`, payload, authHeaders());
+    return response.data;
+};
+
 // ---------- Games ----------
 
 export const getGames = async (isActive?: boolean) => {
