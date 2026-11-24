@@ -89,6 +89,7 @@ export default function GymPayments() {
           amount: Number(payment.amount ?? 0),
           date: payment.createdAt ?? payment.startDate,
           method:
+            payment.paymentType === 6 ? "Receipt upload" :
             payment.paymentType === 1
               ? "Cash"
               : payment.paymentType === 2
