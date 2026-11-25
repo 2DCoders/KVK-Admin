@@ -3,6 +3,7 @@ import { notifyValidation } from "@/lib/notifications";
 import { useFeedbackState } from "@/lib/use-feedback-state";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { isAxiosError } from "axios";
 import {
   Plus,
   Pencil,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import {
   getGamingCategories,
+  createGamingCategory,
   getGamingStationsByCategory,
   createGamingStation,
   updateGamingStation,
@@ -66,11 +68,24 @@ const defaultSlotConfigForm: SlotConfigForm = {
   price: "0",
 };
 
+function requestError(error: unknown, fallback: string) {
+  if (isAxiosError(error)) {
+    const data = error.response?.data;
+    const details: unknown[] = Array.isArray(data?.errors) ? data.errors : Object.values(data?.errors ?? {}).flat();
+    return details.filter((item): item is string => typeof item === "string").join(" ")
+      || data?.message || data?.title || fallback;
+  }
+  return error instanceof Error ? error.message : fallback;
+}
+
 export default function GamingSettings() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategoryId, setActiveCategoryId] = useState("");
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [categoriesError, setCategoriesError] = useFeedbackState<string>("", "error");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+  const [categoryForm, setCategoryForm] = useState({ name: "", code: "" });
 
   const [stations, setStations] = useState<Station[]>([]);
   const [isLoadingStations, setIsLoadingStations] = useState(false);
@@ -130,14 +145,32 @@ export default function GamingSettings() {
         : [];
 
       setCategories(mapped);
-      if (mapped.length > 0) {
-        setActiveCategoryId((current) => current || mapped[0].id);
-      }
-    } catch {
+      setActiveCategoryId((current) => mapped.some((category) => category.id === current) ? current : mapped[0]?.id ?? "");
+    } catch (error) {
       setCategories([]);
-      setCategoriesError("Failed to load categories.");
+      setCategoriesError(requestError(error, "Failed to load categories."));
     } finally {
       setIsLoadingCategories(false);
+    }
+  };
+
+  const handleCreateCategory = async () => {
+    const name = categoryForm.name.trim();
+    const code = categoryForm.code.trim();
+    if (!name || !code || isSavingCategory) return;
+    setIsSavingCategory(true);
+    try {
+      const result = await createGamingCategory({ name, code, price: 0 });
+      const categoryId = result?.additionalData?.response?.id;
+      if (categoryId) setActiveCategoryId(categoryId);
+      await loadCategories();
+      setCategoryForm({ name: "", code: "" });
+      setIsAddingCategory(false);
+      notify.success("Gaming category created. You can now add stations and set the slot price.");
+    } catch (error) {
+      notify.error(requestError(error, "Failed to create the gaming category."));
+    } finally {
+      setIsSavingCategory(false);
     }
   };
 
@@ -264,10 +297,8 @@ export default function GamingSettings() {
       notify.success(`Station ${stationFormModal.mode === "create" ? "created" : "updated"} successfully.`);
       await loadStations(activeCategoryId);
       setStationFormModal(null);
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message || err?.message || "Failed to save station.";
-      setStationSaveError(message);
+    } catch (error) {
+      setStationSaveError(requestError(error, "Failed to save station."));
     } finally {
       setIsSavingStation(false);
     }
@@ -285,8 +316,8 @@ export default function GamingSettings() {
       notify.success("Station deleted successfully.");
       await loadStations(activeCategoryId);
       setStationConfirmTarget(null);
-    } catch (err: any) {
-      setStationActionError(err?.response?.data?.message || err?.message || "Failed to delete station.");
+    } catch (error) {
+      setStationActionError(requestError(error, "Failed to delete station."));
     } finally {
       setBusyStationId(null);
     }
@@ -344,13 +375,11 @@ export default function GamingSettings() {
         await createGamingSlotConfiguration(payload);
       }
 
-      setSlotConfigSuccess("Slot configuration saved — slots have been regenerated for this category.");
       await loadSlotConfig(activeCategoryId);
       await loadCategories();
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message || err?.message || "Failed to save slot configuration.";
-      setSlotConfigError(message);
+      setSlotConfigSuccess("Slot configuration saved. Slots have been regenerated for this category.");
+    } catch (error) {
+      setSlotConfigError(requestError(error, "Failed to save slot configuration."));
     } finally {
       setIsSavingSlotConfig(false);
     }
@@ -359,12 +388,35 @@ export default function GamingSettings() {
   return (
     <div className="page-container">
       <div className="space-y-4">
-        <div>
-          <h1 className="page-heading">Gaming Settings</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Manage stations and slot configuration for each category
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="page-heading">Gaming Settings</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Manage stations and slot configuration for each category
+            </p>
+          </div>
+          <button type="button" className="action-secondary" disabled={isLoadingCategories || !!categoriesError}
+            onClick={() => setIsAddingCategory(true)}><Plus size={15} /> New category</button>
         </div>
+
+        {isAddingCategory && <form className="surface-panel flex flex-wrap items-end gap-3 p-4"
+          onSubmit={(event) => { event.preventDefault(); void handleCreateCategory(); }}>
+          <label className="text-sm font-medium">Category name
+            <input className="field-control mt-1 block w-full border px-3 py-2" required maxLength={100}
+              value={categoryForm.name} disabled={isSavingCategory}
+              onChange={(event) => setCategoryForm({ ...categoryForm, name: event.target.value })} />
+          </label>
+          <label className="text-sm font-medium">Category code
+            <input className="field-control mt-1 block w-full border px-3 py-2" required
+              value={categoryForm.code} disabled={isSavingCategory}
+              onChange={(event) => setCategoryForm({ ...categoryForm, code: event.target.value })} />
+          </label>
+          <button type="submit" className="action-primary" disabled={isSavingCategory || !categoryForm.name.trim() || !categoryForm.code.trim()}>
+            {isSavingCategory ? "Creating…" : "Create category"}
+          </button>
+          <button type="button" className="action-secondary" disabled={isSavingCategory}
+            onClick={() => setIsAddingCategory(false)}>Cancel</button>
+        </form>}
 
         {categoriesError && (
           <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -379,7 +431,7 @@ export default function GamingSettings() {
           </div>
         ) : categories.length === 0 ? (
           <div className="rounded-lg border border-dashed border-gray-300 bg-white px-4 py-12 text-center text-sm text-gray-500">
-            No gaming categories found.
+            {categoriesError ? "Gaming categories are unavailable." : "Create a gaming category to add stations and configure slots."}
           </div>
         ) : (
           <>
@@ -388,6 +440,7 @@ export default function GamingSettings() {
                 <button
                   key={category.id}
                   type="button"
+                  disabled={isSavingStation || !!busyStationId || isSavingSlotConfig || isSavingCategory || isLoadingStations || isLoadingSlotConfig}
                   onClick={() => setActiveCategoryId(category.id)}
                   className={`cursor-pointer rounded-t-md border-b-2 px-4 py-2.5 text-sm font-medium transition-all duration-300 ${
                     activeCategoryId === category.id

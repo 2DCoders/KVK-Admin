@@ -420,7 +420,7 @@ export default function AdminSms() {
     </header>
     <div className="grid border-t border-slate-200 bg-slate-50/60 sm:grid-cols-3">
       <div className="p-4 sm:p-6">
-        <h2 className="flex items-center gap-2 text-xs font-semibold text-slate-600"><BarChart3 size={16} aria-hidden="true" className="text-slate-500" /> Monthly usage</h2>
+        <h2 className="flex items-center gap-2 text-xs font-semibold text-slate-600"><BarChart3 size={16} aria-hidden="true" className="text-slate-500" /> System-wide monthly usage</h2>
         <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{history?.accepted ?? "–"} <span className="text-sm font-medium text-slate-500">/ {settings.monthlyLimit} included segments</span></p>
         <div aria-hidden="true" className="mt-3 h-1.5 rounded-full bg-slate-200">
           <div className="h-full rounded-full bg-[#315bea] transition-all" style={{ width: `${usagePercent}%` }} />

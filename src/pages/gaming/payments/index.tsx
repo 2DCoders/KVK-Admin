@@ -11,6 +11,8 @@ const paymentTypeLabel = (type: number) => {
       return "Cash";
     case 2:
       return "Card";
+    case 3:
+      return "Bank transfer";
     default:
       return "Unknown";
   }
